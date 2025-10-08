@@ -1,0 +1,61 @@
+{
+  "name": "postprober",
+  "version": "1.0.0",
+  "description": "AI Agent powered Prober for Post Reliability Check - SRE/DevOps monitoring for social media posts",
+  "main": "src/backend/server.js",
+  "type": "module",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+      "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+      "dev:backend": "nodemon src/backend/server.js",
+      "dev:frontend": "vite",
+      "build": "vite build",
+      "preview": "vite preview",
+      "start": "node src/backend/server.js",
+      "test": "jest",
+      "lint": "eslint src/",
+      "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JasonZQH/PostProber.git"
+  },
+  "keywords": ["prober", "sre", "devops", "social-media", "monitoring", "ai-agent"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JasonZQH/PostProber/issues"
+  },
+  "homepage": "https://github.com/JasonZQH/PostProber#readme",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^6.2.0",
+    "puppeteer": "^24.23.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.3",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.37.0",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  }
+}
