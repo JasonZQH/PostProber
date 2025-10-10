@@ -170,12 +170,12 @@ function Dashboard() {
                 {recentPosts.map((post) => (
                   <div
                     key={post.id}
-                    className="p-4 border rounded-lg transition-colors hover:bg-gray-50"
+                    className="p-4 border rounded-lg transition-colors hover:bg-white group cursor-pointer"
                     style={{ borderColor: 'var(--gray-200)' }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <p className="text-sm mb-2" style={{ color: 'var(--gray-800)' }}>
+                        <p className="text-sm mb-2 group-hover:!text-black" style={{ color: 'var(--gray-800)' }}>
                           {post.content}
                         </p>
                         <div className="flex items-center gap-2 mb-2">
@@ -196,7 +196,7 @@ function Dashboard() {
                       {getStatusBadge(post.status)}
                     </div>
                     {post.engagement && (
-                      <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--gray-600)' }}>
+                      <div className="flex items-center gap-4 text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
                         <span>❤️ {post.engagement.likes}</span>
                         <span>💬 {post.engagement.comments}</span>
                         <span>🔄 {post.engagement.shares}</span>
@@ -204,7 +204,7 @@ function Dashboard() {
                       </div>
                     )}
                     {post.scheduledFor && (
-                      <div className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                      <div className="text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
                         Scheduled for {post.scheduledFor}
                       </div>
                     )}

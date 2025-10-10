@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 function Header() {
   return (
@@ -14,15 +15,9 @@ function Header() {
         </div>
       </div>
 
-      {/* Center section: Main navigation */}
+      {/* Center section: Search and actions only */}
       <div className="navbar-center hidden xl:flex">
-        <ul className="menu menu-horizontal px-1 gap-2">
-          <li><a className="nav-hover focus-primary" href="/dashboard">Dashboard</a></li>
-          <li><a className="nav-hover focus-primary" href="/compose">Compose</a></li>
-          <li><a className="nav-hover focus-primary" href="/schedule">Schedule</a></li>
-          <li><a className="nav-hover focus-primary" href="/analytics">Analytics</a></li>
-          <li><a className="nav-hover focus-primary" href="/accounts">Accounts</a></li>
-        </ul>
+        {/* Removed duplicate navigation - handled by sidebar */}
       </div>
 
       {/* Right section: Search and notifications */}
@@ -37,10 +32,11 @@ function Header() {
           </div>
         </div>
 
-        {/* Search icon for mobile */}
-        <button className="btn btn-ghost btn-circle md:hidden focus-primary" aria-label="Search">
-          <span className="iconify" data-icon="heroicons:magnifying-glass" data-width="20"></span>
-        </button>
+        {/* Dashboard button for mobile */}
+        <Link to="/dashboard" className="btn btn-ghost btn-sm md:hidden focus-primary">
+          <span className="iconify" data-icon="heroicons:home" data-width="20"></span>
+          <span>Dashboard</span>
+        </Link>
 
         {/* Notifications */}
         <div className="indicator mr-2">

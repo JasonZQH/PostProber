@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Compose from './pages/Compose'
 import Schedule from './pages/Schedule'
 import Analytics from './pages/Analytics'
+import Health from './pages/Health'
 import Accounts from './pages/Accounts'
 import Settings from './pages/Settings'
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/compose" element={<Compose />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/health" element={<Health />} />
           <Route path="/accounts" element={<Accounts />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
