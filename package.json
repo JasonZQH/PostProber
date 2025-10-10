@@ -10,13 +10,15 @@
   },
   "scripts": {
       "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-      "dev:backend": "nodemon src/backend/server.js",
+      "dev:backend": "cd src/backend && python -m uvicorn main:app --reload --port 8000",
       "dev:frontend": "vite",
       "build": "vite build",
       "preview": "vite preview",
-      "start": "node src/backend/server.js",
-      "test": "jest",
-      "lint": "eslint src/",
+      "start:backend": "cd src/backend && python -m uvicorn main:app --port 8000",
+      "install:python": "pip install -r requirements.txt",
+      "init:db": "cd src/backend && python init_db.py",
+      "test": "cd src/backend && python -m pytest tests/",
+      "lint": "eslint src/frontend/",
       "typecheck": "tsc --noEmit"
   },
   "repository": {

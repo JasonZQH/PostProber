@@ -1,26 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import 'https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css';
+
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
-    color: #333;
-  }
+/* DaisyUI Theme Variables Customization */
+:root {
+  /* Light theme customization for social media management app */
+  --color-primary: rgba(59, 130, 246, 1); /* Blue #3B82F6 */
+  --color-primary-content: rgba(255, 255, 255, 1);
+  --color-secondary: rgba(107, 114, 128, 1); /* Gray #6B7280 */
+  --color-secondary-content: rgba(255, 255, 255, 1);
+  --color-accent: rgba(16, 185, 129, 1); /* Emerald #10B981 */
+  --color-accent-content: rgba(255, 255, 255, 1);
+  --color-base-100: rgba(255, 255, 255, 1);
+  --color-base-200: rgba(249, 250, 251, 1); /* #F9FAFB */
+  --color-base-300: rgba(229, 231, 235, 1); /* #E5E7EB */
+  --color-base-content: rgba(31, 41, 55, 1); /* #1F2937 */
+  --color-success: rgba(16, 185, 129, 1);
+  --color-warning: rgba(245, 158, 11, 1);
+  --color-error: rgba(239, 68, 68, 1);
+  --color-info: rgba(59, 130, 246, 1);
+  --radius-box: 0.5rem; /* 8px for modern rounded corners */
+  --radius-field: 0.5rem;
+  --border: 1px;
+}
 
-  .App {
-    min-height: 100vh;
-    padding: 20px;
-  }
+/* Global component styles */
+.transition-width {
+  transition: width 0.3s ease-in-out;
+}
 
-  header {
-    text-align: center;
-    margin-bottom: 40px;
-  }
+.nav-hover {
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
 
-  header h1 {
-    color: #2563eb;
-    margin-bottom: 10px;
-  }
+.shadow-soft {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Header height consistency */
+.header-height {
+  height: 64px;
+}
+
+/* Sidebar dimensions */
+.sidebar-expanded {
+  width: 280px;
+}
+
+.sidebar-collapsed {
+  width: 80px;
+}
+
+/* Focus styles for accessibility */
+.focus-primary:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Apple-inspired minimalist spacing */
+.space-apple {
+  padding: 2rem;
+}
+
+.space-apple-lg {
+  padding: 3rem;
+}
+
+/* Clean card styling */
+.card-clean {
+  border: 1px solid var(--color-base-300);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom styles for interactive cards */
+.card-interactive {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+}
+
+/* Custom scrollbar for quick actions for Webkit browsers */
+.quick-actions-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+.quick-actions-carousel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.quick-actions-carousel::-webkit-scrollbar-thumb {
+  background-color: var(--color-base-300);
+  border-radius: 10px;
+}
+.quick-actions-carousel::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(var(--color-base-content-rgb), 0.5);
+}
+
+/* Custom scrollbar for Firefox */
+.quick-actions-carousel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-base-300) transparent;
+}
+
+/* Ensure font is consistent with UI Guidance */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Additional fallback fonts for system compatibility */
+@supports (font-variation-settings: normal) {
+  html { font-family: 'Inter var', sans-serif; }
+}

@@ -1,0 +1,1226 @@
+
+                <!DOCTYPE html>
+                <html lang="zh">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Compose Post</title>
+                  <style>
+                    *,
+                    *::before,
+                    *::after {
+                      box-sizing: border-box;
+                      margin: 0;
+                    }
+                    .iframe-outer {
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      bottom: 0;
+                      right: 0;
+                      display: flex;
+                      justify-content: center;
+                      background-color: #E0E0E0;
+                    }
+                    .iframe-wrapper {
+                      width: 100%;
+                      height: 100%;
+                      margin: 0 auto;
+                      transform-origin: center top;
+                      flex-shrink: 0;
+                    }
+                    #dynamicIframe {
+                      border: none;
+                      width: 100%;
+                      height: 100%;
+                    }
+                  </style>
+                  <script>
+                const width = 1920
+                const height = 1080
+                const resolutionRatio = width && height ? width / height : 1
+                const pageNameMap = {
+                  'dashboard_page': 'Dashboard',
+    'compose_post_page': 'Compose Post',
+    'schedule_overview_page': 'Schedule Overview',
+    'edit_scheduled_post_page': 'Edit Scheduled Post',
+    'analytics_page': 'Analytics'
+                }
+                function setIframeSize(w, h) {
+                  const currentContainerRadio = w / h
+                  let widthValue = w
+                  let heightValue = h
+                  let zoom = 1
+                  if (currentContainerRadio > resolutionRatio) {
+                    widthValue = h * resolutionRatio
+                    heightValue = h
+                  } else {
+                    widthValue = w
+                    heightValue = w / resolutionRatio
+                  }
+                  zoom = width ? widthValue / width : 1
+                  return {
+                    width: widthValue / zoom + 'px',
+                    height: heightValue / zoom + 'px',
+                    zoom,
+                  }
+                }
+                function adjustIframeSize() {
+                  const iframeWrapper = document.querySelector(".iframe-wrapper")
+                  const { width, height, zoom } = setIframeSize(window.innerWidth, window.innerHeight)
+                  iframeWrapper.style.height = height
+                  iframeWrapper.style.width = width
+                  iframeWrapper.style.transform = 'scale(' + zoom + ')'
+                }
+                function sanitizeFilename(name) {
+                  return name.replace(/[\/:*?"<>|]/g, '_')
+                }
+                function handlePostMessage(event) {
+                  if (!event.data) {
+                    return
+                  }
+                  const { type, targetPageId } = event.data
+                  const targetPageName = pageNameMap[targetPageId]
+                  if (type === "iframeNavigation" && targetPageId && targetPageName) {
+                    window.location.href = targetPageName + '.html'
+                  }
+                }
+                window.addEventListener('message', handlePostMessage)
+                window.onload = adjustIframeSize
+                window.onresize = adjustIframeSize
+                window.onunload = () => {
+                  window.removeEventListener('message', handlePostMessage)
+                }
+              </script>
+                </head>
+                <body>
+                  <div class="iframe-outer">
+                    <div class="iframe-wrapper">
+                      <iframe id="dynamicIframe" srcdoc='<html lang="en" data-theme="light"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Post - Social Hub</title>
+    <link href="./assets/static/uxbot/daisyui@5.css" rel="stylesheet" type="text/css">
+    <script src="./assets/static/uxbot/tailwind-browser@4.js"></script>
+    <link href="./assets/static/uxbot/daisyui-themes.css" rel="stylesheet" type="text/css">
+    <script src="./assets/3/3.1.1/iconify.min.js"></script>
+    <style>
+/* DaisyUI Theme Variables Customization */
+:root {
+/* Light theme customization for social media management app */
+--color-primary: rgba(59, 130, 246, 1); /* Blue #3B82F6 */
+--color-primary-content: rgba(255, 255, 255, 1);
+--color-secondary: rgba(107, 114, 128, 1); /* Gray #6B7280 */
+--color-secondary-content: rgba(255, 255, 255, 1);
+--color-accent: rgba(16, 185, 129, 1); /* Emerald #10B981 */
+--color-accent-content: rgba(255, 255, 255, 1);
+--color-base-100: rgba(255, 255, 255, 1);
+--color-base-200: rgba(249, 250, 251, 1); /* #F9FAFB */
+--color-base-300: rgba(229, 231, 235, 1); /* #E5E7EB */
+--color-base-content: rgba(31, 41, 55, 1); /* #1F2937 */
+--color-success: rgba(16, 185, 129, 1);
+--color-warning: rgba(245, 158, 11, 1);
+--color-error: rgba(239, 68, 68, 1);
+--color-info: rgba(59, 130, 246, 1);
+--radius-box: 0.5rem; /* 8px for modern rounded corners */
+--radius-field: 0.5rem;
+--border: 1px;
+}
+
+/* Global component styles */
+.transition-width {
+transition: width 0.3s ease-in-out;
+}
+
+.nav-hover {
+transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.shadow-soft {
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Header height consistency */
+.header-height {
+height: 64px;
+}
+
+/* Sidebar dimensions */
+.sidebar-expanded {
+width: 280px;
+}
+
+.sidebar-collapsed {
+width: 80px;
+}
+
+/* Focus styles for accessibility */
+.focus-primary:focus {
+outline: 2px solid var(--color-primary);
+outline-offset: 2px;
+}
+
+/* Apple-inspired minimalist spacing */
+.space-apple {
+padding: 2rem;
+}
+
+.space-apple-lg {
+padding: 3rem;
+}
+
+/* Clean card styling */
+.card-clean {
+border: 1px solid var(--color-base-300);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+</style>
+    <style>
+/* Compose Post Page Specific Styles */
+.platform-toggle {
+    transition: all 0.2s ease-in-out;
+}
+
+.platform-toggle:hover {
+    transform: translateY(-1px);
+}
+
+.platform-toggle input:checked + div {
+    color: var(--color-primary);
+}
+
+#mediaDropZone.drag-over {
+    border-color: var(--color-primary);
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.media-preview-item {
+    position: relative;
+    border-radius: var(--radius-box);
+    overflow: hidden;
+    aspect-ratio: 1;
+}
+
+.media-preview-item img,
+.media-preview-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.media-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.media-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+.character-count-warning {
+    color: var(--color-warning) !important;
+}
+
+.character-count-error {
+    color: var(--color-error) !important;
+}
+
+/* AI suggestions animation */
+#aiSuggestions {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus states for better accessibility */
+.textarea:focus,
+.input:focus,
+.select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth transitions for interactive elements */
+.btn,
+.toggle,
+.card {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom scrollbar for main content */
+.main-content-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.main-content-wrapper::-webkit-scrollbar-track {
+    background: var(--color-base-200);
+}
+
+.main-content-wrapper::-webkit-scrollbar-thumb {
+    background: var(--color-base-300);
+    border-radius: 3px;
+}
+
+.main-content-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+}
+</style>
+<script src="./assets/static/uxbot/25_6/holder.js"></script></head>
+<body class="bg-base-100 min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="header-wrapper">
+        <div data-section-id="common_header" data-section-type="common_header">
+<div class="navbar bg-base-100 shadow-soft border-b border-base-300 header-height px-6">
+<!-- Left section: Menu toggle and Logo -->
+<div class="navbar-start">
+<button class="btn btn-ghost btn-circle focus-primary" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+<span class="iconify" data-icon="heroicons:bars-3" data-width="24"></span>
+</button>
+<div class="flex items-center ml-4">
+<img alt="Social Media Manager Logo" class="w-10 h-10 rounded-lg" data-src="placehold.co/40x40.png?text=SM">
+<span class="ml-3 text-xl font-semibold text-primary hidden lg:block">Social Hub</span>
+</div>
+</div>
+
+<!-- Center section: Main navigation -->
+<div class="navbar-center hidden xl:flex">
+<ul class="menu menu-horizontal px-1 gap-2">
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;dashboard_page&#39;)">Dashboard</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;compose_post_page&#39;)">Compose</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;schedule_overview_page&#39;)">Schedule</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;analytics_page&#39;)">Analytics</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;accounts_page&#39;)">Accounts</a></li>
+</ul>
+</div>
+
+<!-- Right section: Search, notifications, user profile -->
+<div class="navbar-end">
+<!-- Global search -->
+<div class="form-control hidden md:block mr-4">
+<div class="join">
+<input type="text" placeholder="Search posts..." class="input input-bordered input-sm join-item w-48 focus-primary">
+<button class="btn btn-sm join-item btn-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="16"></span>
+</button>
+</div>
+</div>
+
+<!-- Search icon for mobile -->
+<button class="btn btn-ghost btn-circle md:hidden focus-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="20"></span>
+</button>
+
+<!-- Notifications -->
+<div class="indicator mr-2">
+<span class="indicator-item badge badge-accent badge-sm">3</span>
+<button class="btn btn-ghost btn-circle focus-primary" aria-label="Notifications">
+<span class="iconify" data-icon="heroicons:bell" data-width="20"></span>
+</button>
+</div>
+
+<!-- User profile dropdown -->
+<div class="dropdown dropdown-end">
+<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar focus-primary">
+<div class="w-10 rounded-full">
+<img alt="User avatar" data-src="placehold.co/40x40.png?text=User">
+</div>
+</div>
+<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-soft bg-base-100 rounded-box w-52">
+<li class="menu-title">
+<span>Account</span>
+</li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:user" data-width="16"></span>
+Profile Settings
+</a></li>
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="16"></span>
+Settings
+</a></li>
+<div class="divider my-1"></div>
+<li><a onclick="navigateTo(&#39;login_page&#39;)" class="nav-hover focus-primary text-error">
+<span class="iconify" data-icon="heroicons:arrow-right-on-rectangle" data-width="16"></span>
+Sign Out
+</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+    </div>
+
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs-wrapper">
+        <div data-section-id="common_breadcrumbs" data-section-type="common_section">
+<div class="breadcrumbs text-sm py-4 px-6 bg-base-100 border-b border-base-300">
+<ul id="breadcrumb-list">
+<!-- Breadcrumb items will be dynamically inserted here -->
+</ul>
+</div>
+</div>
+
+<style>
+[data-section-id="common_breadcrumbs"] .breadcrumbs a {
+color: var(--color-primary);
+transition: color 0.15s ease-in-out;
+}
+
+[data-section-id="common_breadcrumbs"] .breadcrumbs a:hover {
+color: var(--color-secondary);
+}
+</style>
+
+<script>
+(function() {
+// Breadcrumb utility functions
+window.setBreadcrumbs = function(breadcrumbItems) {
+const breadcrumbList = document.getElementById(&#39;breadcrumb-list&#39;);
+if (!breadcrumbList) return;
+
+breadcrumbList.innerHTML = &#39;&#39;;
+
+breadcrumbItems.forEach((item, index) => {
+const li = document.createElement(&#39;li&#39;);
+
+if (item.pageId &amp;&amp; index < breadcrumbItems.length - 1) {
+// Clickable breadcrumb item
+const a = document.createElement(&#39;a&#39;);
+a.onclick = () => navigateTo(item.pageId);
+a.className = &#39;focus-primary cursor-pointer&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+a.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+a.appendChild(textSpan);
+li.appendChild(a);
+} else {
+// Current page (non-clickable)
+const span = document.createElement(&#39;span&#39;);
+span.className = &#39;text-base-content/70&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+span.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+span.appendChild(textSpan);
+li.appendChild(span);
+}
+
+breadcrumbList.appendChild(li);
+});
+};
+
+// Example usage function for pages to call
+window.updateBreadcrumbs = function(currentPageInfo) {
+const defaultBreadcrumbs = [
+{ text: &#39;Dashboard&#39;, pageId: &#39;dashboard_page&#39;, icon: &#39;heroicons:home&#39; }
+];
+
+if (currentPageInfo.category) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.category,
+pageId: currentPageInfo.categoryPageId
+});
+}
+
+if (currentPageInfo.subcategory) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.subcategory,
+pageId: currentPageInfo.subcategoryPageId
+});
+}
+
+defaultBreadcrumbs.push({
+text: currentPageInfo.current,
+icon: currentPageInfo.icon
+});
+
+setBreadcrumbs(defaultBreadcrumbs);
+};
+})();
+</script>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <div class="sidebar-wrapper">
+            <div data-section-id="common_sidebar" data-section-type="common_sidebar">
+<div class="h-full bg-base-100 border-r border-base-300 transition-width flex flex-col">
+<!-- Sidebar content -->
+<div class="flex-1 overflow-y-auto">
+<ul class="menu p-4 gap-2">
+<!-- Dashboard -->
+<li>
+<a onclick="navigateTo(&#39;dashboard_page&#39;)" class="nav-hover focus-primary group" data-current-page="dashboard_page">
+<span class="iconify" data-icon="heroicons:home" data-width="20"></span>
+<span class="sidebar-text font-medium">Dashboard</span>
+</a>
+</li>
+
+<!-- Compose -->
+<li>
+<a onclick="navigateTo(&#39;compose_post_page&#39;)" class="nav-hover focus-primary group" data-current-page="compose_post_page">
+<span class="iconify" data-icon="heroicons:pencil-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Compose Post</span>
+</a>
+</li>
+
+<!-- Schedule Management -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:calendar-days" data-width="20"></span>
+<span class="sidebar-text font-medium">Schedule</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;schedule_overview_page&#39;)" class="nav-hover focus-primary text-sm">Schedule Overview</a></li>
+<li><a onclick="navigateTo(&#39;edit_scheduled_post_page&#39;)" class="nav-hover focus-primary text-sm">Edit Posts</a></li>
+</ul>
+</details>
+</li>
+
+<!-- Analytics -->
+<li>
+<a onclick="navigateTo(&#39;analytics_page&#39;)" class="nav-hover focus-primary group" data-current-page="analytics_page">
+<span class="iconify" data-icon="heroicons:chart-bar-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Analytics</span>
+</a>
+</li>
+
+<!-- Accounts -->
+<li>
+<a onclick="navigateTo(&#39;accounts_page&#39;)" class="nav-hover focus-primary group" data-current-page="accounts_page">
+<span class="iconify" data-icon="heroicons:link" data-width="20"></span>
+<span class="sidebar-text font-medium">Accounts</span>
+</a>
+</li>
+
+<!-- Settings -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="20"></span>
+<span class="sidebar-text font-medium">Settings</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary text-sm">Settings Dashboard</a></li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary text-sm">Profile</a></li>
+<li><a onclick="navigateTo(&#39;ai_settings_page&#39;)" class="nav-hover focus-primary text-sm">AI Settings</a></li>
+<li><a onclick="navigateTo(&#39;notifications_settings_page&#39;)" class="nav-hover focus-primary text-sm">Notifications</a></li>
+<li><a onclick="navigateTo(&#39;privacy_settings_page&#39;)" class="nav-hover focus-primary text-sm">Privacy</a></li>
+</ul>
+</details>
+</li>
+</ul>
+</div>
+
+<!-- Sidebar footer -->
+<div class="p-4 border-t border-base-300">
+<div class="text-center">
+<button class="btn btn-sm btn-ghost w-full nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:question-mark-circle" data-width="16"></span>
+<span class="sidebar-text text-xs">Help &amp;amp; Support</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<style>
+[data-section-id="common_sidebar"] {
+position: sticky;
+top: 0;
+height: 100vh;
+z-index: 40;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed {
+width: 80px;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-text {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-dropdown > summary::after {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-submenu {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-expanded {
+width: 280px;
+}
+
+[data-section-id="common_sidebar"] .sidebar-dropdown[open] > summary {
+background-color: var(--color-base-200);
+}
+
+[data-section-id="common_sidebar"] .menu li > *:where(.active) {
+background-color: var(--color-primary);
+color: var(--color-primary-content);
+}
+</style>
+
+<script>
+(function() {
+// Set active navigation item based on current page
+window.setActiveSidebarItem = function(pageId) {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+// Remove active class from all items
+const allItems = sidebar.querySelectorAll(&#39;.menu a&#39;);
+allItems.forEach(item => item.classList.remove(&#39;active&#39;));
+
+// Add active class to current page
+const currentItem = sidebar.querySelector(`[data-current-page="${pageId}"]`);
+if (currentItem) {
+currentItem.classList.add(&#39;active&#39;);
+}
+};
+})();
+</script>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-wrapper flex-1 overflow-y-auto">
+            <!-- Compose Header -->
+            <div class="compose-header-wrapper bg-base-100 border-b border-base-300">
+                <div class="max-w-4xl mx-auto px-8 py-6">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-3xl font-bold text-base-content">Compose New Post</h1>
+                        <div class="flex items-center gap-4">
+                            <button class="btn btn-ghost" onclick="navigateTo(&#39;dashboard_page&#39;)">Cancel</button>
+                            <button class="btn btn-secondary" onclick="handleSchedulePost()">Schedule Post</button>
+                            <button class="btn btn-primary" onclick="handlePublishNow()">Publish Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="max-w-4xl mx-auto px-8 py-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Main Content Column -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <!-- Post Content Section -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4">Post Content</h2>
+                            <div class="form-control">
+                                <textarea id="postContent" class="textarea textarea-bordered min-h-32 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="What&#39;s on your mind?" oninput="updateCharacterCount()"></textarea>
+                                <div class="flex items-center justify-between mt-3">
+                                    <div class="flex items-center gap-4">
+                                        <button class="btn btn-ghost btn-sm" onclick="toggleEmojiPicker()">
+                                            <span class="iconify" data-icon="heroicons:face-smile" data-width="20"></span>
+                                            Emoji
+                                        </button>
+                                        <button class="btn btn-ghost btn-sm" onclick="generateHashtags()">
+                                            <span class="iconify" data-icon="heroicons:sparkles" data-width="20"></span>
+                                            AI Hashtags
+                                        </button>
+                                    </div>
+                                    <div class="text-sm text-base-content/70">
+                                        <span id="characterCount">0</span> / <span id="characterLimit">280</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Media Upload Section -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4">Media</h2>
+                            <div id="mediaDropZone" class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center transition-colors hover:border-primary/50" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <span class="iconify text-base-content/50 mb-4" data-icon="heroicons:photo" data-width="48"></span>
+                                <p class="text-base-content/70 mb-4">Drag and drop images or videos here</p>
+                                <button class="btn btn-outline" onclick="triggerFileInput()">
+                                    <span class="iconify" data-icon="heroicons:plus" data-width="20"></span>
+                                    Add Media
+                                </button>
+                                <input type="file" id="mediaInput" class="hidden" multiple="" accept="image/*,video/*" onchange="handleFileSelect(event)">
+                            </div>
+                            <div id="mediaPreview" class="grid grid-cols-2 gap-4 mt-4 hidden">
+                                <!-- Media previews will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Platform Selection Section -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4">Platforms</h2>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <label class="platform-toggle cursor-pointer" data-platform="twitter">
+                                    <input type="checkbox" class="toggle toggle-primary" checked="" onchange="updatePlatformSelection(&#39;twitter&#39;, this.checked)">
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="iconify text-blue-500" data-icon="mdi:twitter" data-width="24"></span>
+                                        <span class="text-sm font-medium">Twitter</span>
+                                    </div>
+                                </label>
+                                <label class="platform-toggle cursor-pointer" data-platform="facebook">
+                                    <input type="checkbox" class="toggle toggle-primary" onchange="updatePlatformSelection(&#39;facebook&#39;, this.checked)">
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="iconify text-blue-600" data-icon="mdi:facebook" data-width="24"></span>
+                                        <span class="text-sm font-medium">Facebook</span>
+                                    </div>
+                                </label>
+                                <label class="platform-toggle cursor-pointer" data-platform="instagram">
+                                    <input type="checkbox" class="toggle toggle-primary" onchange="updatePlatformSelection(&#39;instagram&#39;, this.checked)">
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="iconify text-pink-500" data-icon="mdi:instagram" data-width="24"></span>
+                                        <span class="text-sm font-medium">Instagram</span>
+                                    </div>
+                                </label>
+                                <label class="platform-toggle cursor-pointer" data-platform="linkedin">
+                                    <input type="checkbox" class="toggle toggle-primary" onchange="updatePlatformSelection(&#39;linkedin&#39;, this.checked)">
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="iconify text-blue-700" data-icon="mdi:linkedin" data-width="24"></span>
+                                        <span class="text-sm font-medium">LinkedIn</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="mt-4 text-sm text-base-content/70">
+                                <span id="platformCount">1</span> platform(s) selected
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar Column -->
+                    <div class="space-y-8">
+                        <!-- AI Content Assistant -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4 flex items-center gap-2">
+                                <span class="iconify text-primary" data-icon="heroicons:sparkles" data-width="24"></span>
+                                AI Content Assistant
+                            </h2>
+                            <div class="space-y-4">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Tone</span>
+                                    </label>
+                                    <select id="toneSelect" class="select select-bordered select-sm">
+                                        <option value="professional">Professional</option>
+                                        <option value="casual">Casual</option>
+                                        <option value="witty">Witty</option>
+                                        <option value="formal">Formal</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-outline btn-sm w-full" onclick="generateAISuggestions()">
+                                    <span class="iconify" data-icon="heroicons:cpu-chip" data-width="16"></span>
+                                    Generate Suggestions
+                                </button>
+                                <div id="aiSuggestions" class="hidden">
+                                    <div class="bg-base-200 rounded-lg p-4">
+                                        <p class="text-sm text-base-content/80 mb-3" id="suggestionText">AI suggestions will appear here...</p>
+                                        <button class="btn btn-ghost btn-xs" onclick="insertSuggestion()">
+                                            <span class="iconify" data-icon="heroicons:arrow-down" data-width="14"></span>
+                                            Insert
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scheduling Options -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4">Schedule</h2>
+                            <div class="space-y-4">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Date</span>
+                                    </label>
+                                    <input type="date" id="scheduleDate" class="input input-bordered input-sm">
+                                </div>
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Time</span>
+                                    </label>
+                                    <input type="time" id="scheduleTime" class="input input-bordered input-sm">
+                                </div>
+                                <div class="form-control">
+                                    <label class="label cursor-pointer">
+                                        <span class="label-text">Use optimal time</span>
+                                        <input type="checkbox" class="toggle toggle-accent toggle-sm" id="optimalTime" onchange="toggleOptimalTime()">
+                                    </label>
+                                </div>
+                                <div class="text-xs text-base-content/60">
+                                    <span class="iconify" data-icon="heroicons:clock" data-width="14"></span>
+                                    Timezone: UTC-8 (PST)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Post Actions -->
+                        <div class="card card-clean bg-base-100 p-6">
+                            <h2 class="text-xl font-semibold text-base-content mb-4">Actions</h2>
+                            <div class="space-y-3">
+                                <button class="btn btn-outline btn-sm w-full" onclick="previewPost()">
+                                    <span class="iconify" data-icon="heroicons:eye" data-width="16"></span>
+                                    Preview Post
+                                </button>
+                                <button class="btn btn-ghost btn-sm w-full" onclick="saveDraft()">
+                                    <span class="iconify" data-icon="heroicons:document-duplicate" data-width="16"></span>
+                                    Save Draft
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-wrapper">
+        <div data-section-id="common_footer" data-section-type="common_footer">
+<footer class="footer footer-center p-8 bg-base-200 text-base-content border-t border-base-300">
+<div class="grid grid-flow-col gap-6">
+<a class="link link-hover focus-primary">About</a>
+<a class="link link-hover focus-primary">Help Center</a>
+<a class="link link-hover focus-primary">Contact</a>
+<a class="link link-hover focus-primary">Privacy Policy</a>
+<a class="link link-hover focus-primary">Terms of Service</a>
+</div>
+<div class="grid grid-flow-col gap-4">
+<a class="link link-hover focus-primary" aria-label="Twitter">
+<span class="iconify" data-icon="simple-icons:twitter" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Facebook">
+<span class="iconify" data-icon="simple-icons:facebook" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Instagram">
+<span class="iconify" data-icon="simple-icons:instagram" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="LinkedIn">
+<span class="iconify" data-icon="simple-icons:linkedin" data-width="20"></span>
+</a>
+</div>
+<div class="text-center">
+<p>© 2024 Social Hub. All rights reserved.</p>
+<p class="text-sm opacity-70 mt-1">Streamline your social media management</p>
+</div>
+</footer>
+</div>
+    </div>
+
+    <script>
+(function() {
+&#39;use strict&#39;;
+
+// Initialize global namespace
+window.APP_GLOBALS = window.APP_GLOBALS || {};
+
+// Global navigation utility
+window.navigateTo = function(targetPageId) {
+const isInIframe = window.self !== window.top;
+const targetFileName = `${targetPageId}.html`;
+
+if (isInIframe) {
+window.parent.postMessage({
+type: &#39;iframeNavigation&#39;,
+targetPageId: targetPageId
+}, &#39;*&#39;);
+} else {
+window.location.href = targetFileName;
+}
+};
+
+// Sidebar collapse/expand utility
+window.toggleSidebar = function() {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+const isCollapsed = sidebar.classList.contains(&#39;sidebar-collapsed&#39;);
+
+if (isCollapsed) {
+sidebar.classList.remove(&#39;sidebar-collapsed&#39;);
+sidebar.classList.add(&#39;sidebar-expanded&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;expanded&#39;);
+} else {
+sidebar.classList.remove(&#39;sidebar-expanded&#39;);
+sidebar.classList.add(&#39;sidebar-collapsed&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;collapsed&#39;);
+}
+};
+
+// Initialize sidebar state from localStorage
+window.initSidebarState = function() {
+const savedState = localStorage.getItem(&#39;sidebarState&#39;) || &#39;expanded&#39;;
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (sidebar) {
+sidebar.classList.add(savedState === &#39;collapsed&#39; ? &#39;sidebar-collapsed&#39; : &#39;sidebar-expanded&#39;);
+}
+};
+
+// Notification utilities
+window.showNotification = function(message, type = &#39;info&#39;) {
+const notification = document.createElement(&#39;div&#39;);
+notification.className = `alert alert-${type} fixed top-4 right-4 w-96 z-50 shadow-lg`;
+notification.innerHTML = `
+<div class="flex items-center gap-2">
+<span class="iconify" data-icon="heroicons:information-circle-solid" data-width="20"></span>
+<span>${message}</span>
+</div>
+`;
+
+document.body.appendChild(notification);
+
+setTimeout(() => {
+if (notification.parentNode) {
+notification.remove();
+}
+}, 5000);
+};
+
+// Initialize components when DOM is loaded
+document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+initSidebarState();
+});
+
+})();
+</script>
+    <script>
+(function() {
+    &#39;use strict&#39;;
+
+    // Page initialization
+    document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+        // Set active sidebar item
+        if (typeof setActiveSidebarItem === &#39;function&#39;) {
+            setActiveSidebarItem(&#39;compose_post_page&#39;);
+        }
+
+        // Update breadcrumbs
+        if (typeof window.updateBreadcrumbs === &#39;function&#39;) {
+            window.updateBreadcrumbs({
+                current: &#39;Compose Post&#39;,
+                icon: &#39;heroicons:pencil-square&#39;
+            });
+        }
+
+        // Initialize character count
+        updateCharacterCount();
+        
+        // Set default date to today
+        const today = new Date().toISOString().split(&#39;T&#39;)[0];
+        document.getElementById(&#39;scheduleDate&#39;).value = today;
+        
+        // Set default time to current time + 1 hour
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        const timeString = now.toTimeString().slice(0, 5);
+        document.getElementById(&#39;scheduleTime&#39;).value = timeString;
+    });
+
+    // Platform selection state
+    let selectedPlatforms = [&#39;twitter&#39;];
+    const platformLimits = {
+        twitter: 280,
+        facebook: 2200,
+        instagram: 2200,
+        linkedin: 3000
+    };
+
+    // Character count functionality
+    window.updateCharacterCount = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value;
+        const count = content.length;
+        const limit = getCharacterLimit();
+        
+        const countElement = document.getElementById(&#39;characterCount&#39;);
+        const limitElement = document.getElementById(&#39;characterLimit&#39;);
+        
+        countElement.textContent = count;
+        limitElement.textContent = limit;
+        
+        // Update styling based on character count
+        countElement.className = &#39;&#39;;
+        if (count > limit * 0.9) {
+            countElement.classList.add(&#39;character-count-warning&#39;);
+        }
+        if (count > limit) {
+            countElement.classList.add(&#39;character-count-error&#39;);
+        }
+    };
+
+    function getCharacterLimit() {
+        if (selectedPlatforms.length === 0) return 280;
+        return Math.min(...selectedPlatforms.map(platform => platformLimits[platform]));
+    }
+
+    // Platform selection functionality
+    window.updatePlatformSelection = function(platform, isSelected) {
+        if (isSelected) {
+            if (!selectedPlatforms.includes(platform)) {
+                selectedPlatforms.push(platform);
+            }
+        } else {
+            selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+        }
+        
+        // Update platform count
+        document.getElementById(&#39;platformCount&#39;).textContent = selectedPlatforms.length;
+        
+        // Update character limit
+        updateCharacterCount();
+    };
+
+    // Media upload functionality
+    window.handleDrop = function(event) {
+        event.preventDefault();
+        const dropZone = document.getElementById(&#39;mediaDropZone&#39;);
+        dropZone.classList.remove(&#39;drag-over&#39;);
+        
+        const files = Array.from(event.dataTransfer.files);
+        handleFiles(files);
+    };
+
+    window.handleDragOver = function(event) {
+        event.preventDefault();
+        const dropZone = document.getElementById(&#39;mediaDropZone&#39;);
+        dropZone.classList.add(&#39;drag-over&#39;);
+    };
+
+    window.handleDragLeave = function(event) {
+        event.preventDefault();
+        const dropZone = document.getElementById(&#39;mediaDropZone&#39;);
+        dropZone.classList.remove(&#39;drag-over&#39;);
+    };
+
+    window.triggerFileInput = function() {
+        document.getElementById(&#39;mediaInput&#39;).click();
+    };
+
+    window.handleFileSelect = function(event) {
+        const files = Array.from(event.target.files);
+        handleFiles(files);
+    };
+
+    function handleFiles(files) {
+        const preview = document.getElementById(&#39;mediaPreview&#39;);
+        preview.classList.remove(&#39;hidden&#39;);
+        
+        files.forEach(file => {
+            if (file.type.startsWith(&#39;image/&#39;) || file.type.startsWith(&#39;video/&#39;)) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const mediaItem = document.createElement(&#39;div&#39;);
+                    mediaItem.className = &#39;media-preview-item&#39;;
+                    
+                    const mediaElement = file.type.startsWith(&#39;image/&#39;) 
+                        ? `<img src="${e.target.result}" alt="Preview">`
+                        : `<video src="${e.target.result}" controls></video>`;
+                    
+                    mediaItem.innerHTML = `
+                        ${mediaElement}
+                        <button class="media-remove-btn" onclick="removeMediaItem(this)">
+                            <span class="iconify" data-icon="heroicons:x-mark" data-width="12"></span>
+                        </button>
+                    `;
+                    
+                    preview.appendChild(mediaItem);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    window.removeMediaItem = function(button) {
+        const mediaItem = button.parentElement;
+        mediaItem.remove();
+        
+        const preview = document.getElementById(&#39;mediaPreview&#39;);
+        if (preview.children.length === 0) {
+            preview.classList.add(&#39;hidden&#39;);
+        }
+    };
+
+    // AI functionality
+    window.generateHashtags = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value;
+        if (!content.trim()) {
+            showNotification(&#39;Please enter some content first&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        // Simulate AI hashtag generation
+        const hashtags = [&#39;#socialmedia&#39;, &#39;#content&#39;, &#39;#marketing&#39;, &#39;#engagement&#39;];
+        const currentContent = content + &#39;\n\n&#39; + hashtags.join(&#39; &#39;);
+        document.getElementById(&#39;postContent&#39;).value = currentContent;
+        updateCharacterCount();
+        
+        showNotification(&#39;AI hashtags added!&#39;, &#39;success&#39;);
+    };
+
+    window.generateAISuggestions = function() {
+        const tone = document.getElementById(&#39;toneSelect&#39;).value;
+        const suggestionsDiv = document.getElementById(&#39;aiSuggestions&#39;);
+        const suggestionText = document.getElementById(&#39;suggestionText&#39;);
+        
+        // Simulate AI suggestion generation
+        const suggestions = {
+            professional: "Consider highlighting key benefits and including a clear call-to-action for better engagement.",
+            casual: "Add some personality with emojis and ask your audience a question to boost interaction!",
+            witty: "Try adding a clever twist or unexpected angle to make your post more memorable.",
+            formal: "Ensure your message is clear, concise, and includes relevant industry terminology."
+        };
+        
+        suggestionText.textContent = suggestions[tone] || suggestions.professional;
+        suggestionsDiv.classList.remove(&#39;hidden&#39;);
+        
+        showNotification(&#39;AI suggestions generated!&#39;, &#39;info&#39;);
+    };
+
+    window.insertSuggestion = function() {
+        const suggestion = document.getElementById(&#39;suggestionText&#39;).textContent;
+        const currentContent = document.getElementById(&#39;postContent&#39;).value;
+        const newContent = currentContent + (currentContent ? &#39;\n\n&#39; : &#39;&#39;) + suggestion;
+        
+        document.getElementById(&#39;postContent&#39;).value = newContent;
+        updateCharacterCount();
+        
+        showNotification(&#39;Suggestion inserted!&#39;, &#39;success&#39;);
+    };
+
+    // Scheduling functionality
+    window.toggleOptimalTime = function() {
+        const optimalTimeToggle = document.getElementById(&#39;optimalTime&#39;);
+        const dateInput = document.getElementById(&#39;scheduleDate&#39;);
+        const timeInput = document.getElementById(&#39;scheduleTime&#39;);
+        
+        if (optimalTimeToggle.checked) {
+            dateInput.disabled = true;
+            timeInput.disabled = true;
+            dateInput.classList.add(&#39;input-disabled&#39;);
+            timeInput.classList.add(&#39;input-disabled&#39;);
+        } else {
+            dateInput.disabled = false;
+            timeInput.disabled = false;
+            dateInput.classList.remove(&#39;input-disabled&#39;);
+            timeInput.classList.remove(&#39;input-disabled&#39;);
+        }
+    };
+
+    // Emoji picker (simplified)
+    window.toggleEmojiPicker = function() {
+        const emojis = [&#39;😀&#39;, &#39;😍&#39;, &#39;🎉&#39;, &#39;👍&#39;, &#39;❤️&#39;, &#39;🔥&#39;, &#39;💯&#39;, &#39;🚀&#39;];
+        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        const content = document.getElementById(&#39;postContent&#39;);
+        content.value += randomEmoji;
+        updateCharacterCount();
+    };
+
+    // Action handlers
+    window.handlePublishNow = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value.trim();
+        if (!content) {
+            showNotification(&#39;Please enter some content for your post&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        if (selectedPlatforms.length === 0) {
+            showNotification(&#39;Please select at least one platform&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        showNotification(&#39;Post published successfully!&#39;, &#39;success&#39;);
+        setTimeout(() => {
+            navigateTo(&#39;dashboard_page&#39;);
+        }, 1500);
+    };
+
+    window.handleSchedulePost = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value.trim();
+        if (!content) {
+            showNotification(&#39;Please enter some content for your post&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        if (selectedPlatforms.length === 0) {
+            showNotification(&#39;Please select at least one platform&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        showNotification(&#39;Post scheduled successfully!&#39;, &#39;success&#39;);
+        setTimeout(() => {
+            navigateTo(&#39;schedule_overview_page&#39;);
+        }, 1500);
+    };
+
+    window.previewPost = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value.trim();
+        if (!content) {
+            showNotification(&#39;Please enter some content to preview&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        showNotification(&#39;Preview feature coming soon!&#39;, &#39;info&#39;);
+    };
+
+    window.saveDraft = function() {
+        const content = document.getElementById(&#39;postContent&#39;).value.trim();
+        if (!content) {
+            showNotification(&#39;Please enter some content to save&#39;, &#39;warning&#39;);
+            return;
+        }
+        
+        showNotification(&#39;Draft saved successfully!&#39;, &#39;success&#39;);
+    };
+
+})();
+</script>
+
+<script>
+    setTimeout(() => {
+      Holder.run({
+        domain: "placehold.co"
+      })
+    }, 100)
+  </script></body></html>'></iframe>
+                    </div>
+                  </div>
+
+                </body>
+                </html>
+            

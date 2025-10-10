@@ -1,0 +1,1257 @@
+
+                <!DOCTYPE html>
+                <html lang="zh">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Analytics</title>
+                  <style>
+                    *,
+                    *::before,
+                    *::after {
+                      box-sizing: border-box;
+                      margin: 0;
+                    }
+                    .iframe-outer {
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      bottom: 0;
+                      right: 0;
+                      display: flex;
+                      justify-content: center;
+                      background-color: #E0E0E0;
+                    }
+                    .iframe-wrapper {
+                      width: 100%;
+                      height: 100%;
+                      margin: 0 auto;
+                      transform-origin: center top;
+                      flex-shrink: 0;
+                    }
+                    #dynamicIframe {
+                      border: none;
+                      width: 100%;
+                      height: 100%;
+                    }
+                  </style>
+                  <script>
+                const width = 1920
+                const height = 1080
+                const resolutionRatio = width && height ? width / height : 1
+                const pageNameMap = {
+                  'dashboard_page': 'Dashboard',
+    'compose_post_page': 'Compose Post',
+    'schedule_overview_page': 'Schedule Overview',
+    'edit_scheduled_post_page': 'Edit Scheduled Post',
+    'analytics_page': 'Analytics'
+                }
+                function setIframeSize(w, h) {
+                  const currentContainerRadio = w / h
+                  let widthValue = w
+                  let heightValue = h
+                  let zoom = 1
+                  if (currentContainerRadio > resolutionRatio) {
+                    widthValue = h * resolutionRatio
+                    heightValue = h
+                  } else {
+                    widthValue = w
+                    heightValue = w / resolutionRatio
+                  }
+                  zoom = width ? widthValue / width : 1
+                  return {
+                    width: widthValue / zoom + 'px',
+                    height: heightValue / zoom + 'px',
+                    zoom,
+                  }
+                }
+                function adjustIframeSize() {
+                  const iframeWrapper = document.querySelector(".iframe-wrapper")
+                  const { width, height, zoom } = setIframeSize(window.innerWidth, window.innerHeight)
+                  iframeWrapper.style.height = height
+                  iframeWrapper.style.width = width
+                  iframeWrapper.style.transform = 'scale(' + zoom + ')'
+                }
+                function sanitizeFilename(name) {
+                  return name.replace(/[\/:*?"<>|]/g, '_')
+                }
+                function handlePostMessage(event) {
+                  if (!event.data) {
+                    return
+                  }
+                  const { type, targetPageId } = event.data
+                  const targetPageName = pageNameMap[targetPageId]
+                  if (type === "iframeNavigation" && targetPageId && targetPageName) {
+                    window.location.href = targetPageName + '.html'
+                  }
+                }
+                window.addEventListener('message', handlePostMessage)
+                window.onload = adjustIframeSize
+                window.onresize = adjustIframeSize
+                window.onunload = () => {
+                  window.removeEventListener('message', handlePostMessage)
+                }
+              </script>
+                </head>
+                <body>
+                  <div class="iframe-outer">
+                    <div class="iframe-wrapper">
+                      <iframe id="dynamicIframe" srcdoc='<html lang="en" data-theme="light"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Social Hub</title>
+    <link href="./assets/static/uxbot/daisyui@5.css" rel="stylesheet" type="text/css">
+    <script src="./assets/static/uxbot/tailwind-browser@4.js"></script>
+    <link href="./assets/static/uxbot/daisyui-themes.css" rel="stylesheet" type="text/css">
+    <script src="./assets/3/3.1.1/iconify.min.js"></script>
+    <style>
+/* DaisyUI Theme Variables Customization */
+:root {
+/* Light theme customization for social media management app */
+--color-primary: rgba(59, 130, 246, 1); /* Blue #3B82F6 */
+--color-primary-content: rgba(255, 255, 255, 1);
+--color-secondary: rgba(107, 114, 128, 1); /* Gray #6B7280 */
+--color-secondary-content: rgba(255, 255, 255, 1);
+--color-accent: rgba(16, 185, 129, 1); /* Emerald #10B981 */
+--color-accent-content: rgba(255, 255, 255, 1);
+--color-base-100: rgba(255, 255, 255, 1);
+--color-base-200: rgba(249, 250, 251, 1); /* #F9FAFB */
+--color-base-300: rgba(229, 231, 235, 1); /* #E5E7EB */
+--color-base-content: rgba(31, 41, 55, 1); /* #1F2937 */
+--color-success: rgba(16, 185, 129, 1);
+--color-warning: rgba(245, 158, 11, 1);
+--color-error: rgba(239, 68, 68, 1);
+--color-info: rgba(59, 130, 246, 1);
+--radius-box: 0.5rem; /* 8px for modern rounded corners */
+--radius-field: 0.5rem;
+--border: 1px;
+}
+
+/* Global component styles */
+.transition-width {
+transition: width 0.3s ease-in-out;
+}
+
+.nav-hover {
+transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.shadow-soft {
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Header height consistency */
+.header-height {
+height: 64px;
+}
+
+/* Sidebar dimensions */
+.sidebar-expanded {
+width: 280px;
+}
+
+.sidebar-collapsed {
+width: 80px;
+}
+
+/* Focus styles for accessibility */
+.focus-primary:focus {
+outline: 2px solid var(--color-primary);
+outline-offset: 2px;
+}
+
+/* Apple-inspired minimalist spacing */
+.space-apple {
+padding: 2rem;
+}
+
+.space-apple-lg {
+padding: 3rem;
+}
+
+/* Clean card styling */
+.card-clean {
+border: 1px solid var(--color-base-300);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+</style>
+    <style>
+/* Analytics page specific styles */
+.sparkline-chart {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--color-success) 0%, var(--color-success) 50%, transparent 50%);
+    border-radius: 2px;
+    opacity: 0.6;
+}
+
+/* Chart container styling */
+#engagementChart, #reachChart {
+    background: var(--color-base-100);
+    border-radius: var(--radius-box);
+}
+
+/* Table hover effects */
+.table tbody tr:hover {
+    background-color: var(--color-base-200);
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Metric card hover effects */
+.card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Custom tooltip styling */
+.tooltip-custom {
+    position: relative;
+}
+
+.tooltip-custom:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-base-content);
+    color: var(--color-base-100);
+    padding: 0.5rem;
+    border-radius: var(--radius-field);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
+    opacity: 0.9;
+}
+
+/* Chart legend styling */
+.chart-legend {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.chart-legend-item:hover {
+    opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-content-wrapper {
+        padding: 1rem;
+    }
+    
+    .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .flex-wrap {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* Loading state for charts */
+.chart-loading {
+    display: flex;
+    items-center: center;
+    justify-content: center;
+    height: 16rem;
+    background: var(--color-base-200);
+    border-radius: var(--radius-box);
+}
+
+/* Smooth transitions for interactive elements */
+.btn, .select, .card {
+    transition: all 0.15s ease-in-out;
+}
+
+/* Focus states for accessibility */
+.btn:focus, .select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+</style>
+<script src="./assets/static/uxbot/25_6/holder.js"></script></head>
+<body class="bg-base-100">
+    <!-- Header -->
+    <div class="header-wrapper fixed top-0 left-0 right-0 z-40">
+        <div data-section-id="common_header" data-section-type="common_header">
+<div class="navbar bg-base-100 shadow-soft border-b border-base-300 header-height px-6">
+<!-- Left section: Menu toggle and Logo -->
+<div class="navbar-start">
+<button class="btn btn-ghost btn-circle focus-primary" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+<span class="iconify" data-icon="heroicons:bars-3" data-width="24"></span>
+</button>
+<div class="flex items-center ml-4">
+<img alt="Social Media Manager Logo" class="w-10 h-10 rounded-lg" data-src="placehold.co/40x40.png?text=SM">
+<span class="ml-3 text-xl font-semibold text-primary hidden lg:block">Social Hub</span>
+</div>
+</div>
+
+<!-- Center section: Main navigation -->
+<div class="navbar-center hidden xl:flex">
+<ul class="menu menu-horizontal px-1 gap-2">
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;dashboard_page&#39;)">Dashboard</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;compose_post_page&#39;)">Compose</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;schedule_overview_page&#39;)">Schedule</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;analytics_page&#39;)">Analytics</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;accounts_page&#39;)">Accounts</a></li>
+</ul>
+</div>
+
+<!-- Right section: Search, notifications, user profile -->
+<div class="navbar-end">
+<!-- Global search -->
+<div class="form-control hidden md:block mr-4">
+<div class="join">
+<input type="text" placeholder="Search posts..." class="input input-bordered input-sm join-item w-48 focus-primary">
+<button class="btn btn-sm join-item btn-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="16"></span>
+</button>
+</div>
+</div>
+
+<!-- Search icon for mobile -->
+<button class="btn btn-ghost btn-circle md:hidden focus-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="20"></span>
+</button>
+
+<!-- Notifications -->
+<div class="indicator mr-2">
+<span class="indicator-item badge badge-accent badge-sm">3</span>
+<button class="btn btn-ghost btn-circle focus-primary" aria-label="Notifications">
+<span class="iconify" data-icon="heroicons:bell" data-width="20"></span>
+</button>
+</div>
+
+<!-- User profile dropdown -->
+<div class="dropdown dropdown-end">
+<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar focus-primary">
+<div class="w-10 rounded-full">
+<img alt="User avatar" data-src="placehold.co/40x40.png?text=User">
+</div>
+</div>
+<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-soft bg-base-100 rounded-box w-52">
+<li class="menu-title">
+<span>Account</span>
+</li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:user" data-width="16"></span>
+Profile Settings
+</a></li>
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="16"></span>
+Settings
+</a></li>
+<div class="divider my-1"></div>
+<li><a onclick="navigateTo(&#39;login_page&#39;)" class="nav-hover focus-primary text-error">
+<span class="iconify" data-icon="heroicons:arrow-right-on-rectangle" data-width="16"></span>
+Sign Out
+</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex min-h-screen pt-16">
+        <!-- Sidebar -->
+        <div class="sidebar-wrapper">
+            <div data-section-id="common_sidebar" data-section-type="common_sidebar">
+<div class="h-full bg-base-100 border-r border-base-300 transition-width flex flex-col">
+<!-- Sidebar content -->
+<div class="flex-1 overflow-y-auto">
+<ul class="menu p-4 gap-2">
+<!-- Dashboard -->
+<li>
+<a onclick="navigateTo(&#39;dashboard_page&#39;)" class="nav-hover focus-primary group" data-current-page="dashboard_page">
+<span class="iconify" data-icon="heroicons:home" data-width="20"></span>
+<span class="sidebar-text font-medium">Dashboard</span>
+</a>
+</li>
+
+<!-- Compose -->
+<li>
+<a onclick="navigateTo(&#39;compose_post_page&#39;)" class="nav-hover focus-primary group" data-current-page="compose_post_page">
+<span class="iconify" data-icon="heroicons:pencil-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Compose Post</span>
+</a>
+</li>
+
+<!-- Schedule Management -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:calendar-days" data-width="20"></span>
+<span class="sidebar-text font-medium">Schedule</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;schedule_overview_page&#39;)" class="nav-hover focus-primary text-sm">Schedule Overview</a></li>
+<li><a onclick="navigateTo(&#39;edit_scheduled_post_page&#39;)" class="nav-hover focus-primary text-sm">Edit Posts</a></li>
+</ul>
+</details>
+</li>
+
+<!-- Analytics -->
+<li>
+<a onclick="navigateTo(&#39;analytics_page&#39;)" class="nav-hover focus-primary group" data-current-page="analytics_page">
+<span class="iconify" data-icon="heroicons:chart-bar-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Analytics</span>
+</a>
+</li>
+
+<!-- Accounts -->
+<li>
+<a onclick="navigateTo(&#39;accounts_page&#39;)" class="nav-hover focus-primary group" data-current-page="accounts_page">
+<span class="iconify" data-icon="heroicons:link" data-width="20"></span>
+<span class="sidebar-text font-medium">Accounts</span>
+</a>
+</li>
+
+<!-- Settings -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="20"></span>
+<span class="sidebar-text font-medium">Settings</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary text-sm">Settings Dashboard</a></li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary text-sm">Profile</a></li>
+<li><a onclick="navigateTo(&#39;ai_settings_page&#39;)" class="nav-hover focus-primary text-sm">AI Settings</a></li>
+<li><a onclick="navigateTo(&#39;notifications_settings_page&#39;)" class="nav-hover focus-primary text-sm">Notifications</a></li>
+<li><a onclick="navigateTo(&#39;privacy_settings_page&#39;)" class="nav-hover focus-primary text-sm">Privacy</a></li>
+</ul>
+</details>
+</li>
+</ul>
+</div>
+
+<!-- Sidebar footer -->
+<div class="p-4 border-t border-base-300">
+<div class="text-center">
+<button class="btn btn-sm btn-ghost w-full nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:question-mark-circle" data-width="16"></span>
+<span class="sidebar-text text-xs">Help &amp;amp; Support</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<style>
+[data-section-id="common_sidebar"] {
+position: sticky;
+top: 0;
+height: 100vh;
+z-index: 40;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed {
+width: 80px;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-text {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-dropdown > summary::after {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-submenu {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-expanded {
+width: 280px;
+}
+
+[data-section-id="common_sidebar"] .sidebar-dropdown[open] > summary {
+background-color: var(--color-base-200);
+}
+
+[data-section-id="common_sidebar"] .menu li > *:where(.active) {
+background-color: var(--color-primary);
+color: var(--color-primary-content);
+}
+</style>
+
+<script>
+(function() {
+// Set active navigation item based on current page
+window.setActiveSidebarItem = function(pageId) {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+// Remove active class from all items
+const allItems = sidebar.querySelectorAll(&#39;.menu a&#39;);
+allItems.forEach(item => item.classList.remove(&#39;active&#39;));
+
+// Add active class to current page
+const currentItem = sidebar.querySelector(`[data-current-page="${pageId}"]`);
+if (currentItem) {
+currentItem.classList.add(&#39;active&#39;);
+}
+};
+})();
+</script>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-wrapper flex-1 flex flex-col">
+            <!-- Breadcrumbs -->
+            <div data-section-id="common_breadcrumbs" data-section-type="common_section">
+<div class="breadcrumbs text-sm py-4 px-6 bg-base-100 border-b border-base-300">
+<ul id="breadcrumb-list">
+<!-- Breadcrumb items will be dynamically inserted here -->
+</ul>
+</div>
+</div>
+
+<style>
+[data-section-id="common_breadcrumbs"] .breadcrumbs a {
+color: var(--color-primary);
+transition: color 0.15s ease-in-out;
+}
+
+[data-section-id="common_breadcrumbs"] .breadcrumbs a:hover {
+color: var(--color-secondary);
+}
+</style>
+
+<script>
+(function() {
+// Breadcrumb utility functions
+window.setBreadcrumbs = function(breadcrumbItems) {
+const breadcrumbList = document.getElementById(&#39;breadcrumb-list&#39;);
+if (!breadcrumbList) return;
+
+breadcrumbList.innerHTML = &#39;&#39;;
+
+breadcrumbItems.forEach((item, index) => {
+const li = document.createElement(&#39;li&#39;);
+
+if (item.pageId &amp;&amp; index < breadcrumbItems.length - 1) {
+// Clickable breadcrumb item
+const a = document.createElement(&#39;a&#39;);
+a.onclick = () => navigateTo(item.pageId);
+a.className = &#39;focus-primary cursor-pointer&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+a.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+a.appendChild(textSpan);
+li.appendChild(a);
+} else {
+// Current page (non-clickable)
+const span = document.createElement(&#39;span&#39;);
+span.className = &#39;text-base-content/70&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+span.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+span.appendChild(textSpan);
+li.appendChild(span);
+}
+
+breadcrumbList.appendChild(li);
+});
+};
+
+// Example usage function for pages to call
+window.updateBreadcrumbs = function(currentPageInfo) {
+const defaultBreadcrumbs = [
+{ text: &#39;Dashboard&#39;, pageId: &#39;dashboard_page&#39;, icon: &#39;heroicons:home&#39; }
+];
+
+if (currentPageInfo.category) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.category,
+pageId: currentPageInfo.categoryPageId
+});
+}
+
+if (currentPageInfo.subcategory) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.subcategory,
+pageId: currentPageInfo.subcategoryPageId
+});
+}
+
+defaultBreadcrumbs.push({
+text: currentPageInfo.current,
+icon: currentPageInfo.icon
+});
+
+setBreadcrumbs(defaultBreadcrumbs);
+};
+})();
+</script>
+
+            <!-- Analytics Page Content -->
+            <main class="flex-1 p-8 space-y-8">
+                <!-- Analytics Header -->
+                <section class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold text-base-content mb-2">Analytics Overview</h1>
+                        <p class="text-lg text-base-content/70">In-depth insights into your social media performance.</p>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="navigateTo(&#39;compose_post_page&#39;)">
+                        <span class="iconify" data-icon="heroicons:plus" data-width="20"></span>
+                        Create New Post
+                    </button>
+                </section>
+
+                <!-- Analytics Controls -->
+                <section class="bg-base-100 rounded-lg border border-base-300 p-6 shadow-soft">
+                    <div class="flex flex-wrap items-end gap-6">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Time Period</span>
+                            </label>
+                            <select class="select select-bordered w-48" id="dateRangeSelect">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected="">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Platform</span>
+                            </label>
+                            <select class="select select-bordered w-48" id="platformSelect">
+                                <option value="all" selected="">All Platforms</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="linkedin">LinkedIn</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="applyFilters()">
+                            <span class="iconify" data-icon="heroicons:funnel" data-width="20"></span>
+                            Apply Filters
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Key Metrics Section -->
+                <section>
+                    <h2 class="text-2xl font-bold text-base-content mb-6">Key Metrics</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Total Posts Card -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft" data-repeatable="true">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <span class="iconify text-primary" data-icon="heroicons:document-text" data-width="24"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-3xl font-bold text-base-content">247</div>
+                                        <div class="text-sm text-base-content/70">Total Posts</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1 text-success">
+                                        <span class="iconify" data-icon="heroicons:arrow-trending-up" data-width="16"></span>
+                                        <span class="text-sm font-medium">+12%</span>
+                                    </div>
+                                    <div class="w-16 h-8 bg-success/10 rounded flex items-center justify-center">
+                                        <div class="sparkline-chart" data-values="[10,15,12,18,20,16,22]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Reach Card -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft" data-repeatable="true">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+                                        <span class="iconify text-info" data-icon="heroicons:eye" data-width="24"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-3xl font-bold text-base-content">1.2M</div>
+                                        <div class="text-sm text-base-content/70">Total Reach</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1 text-success">
+                                        <span class="iconify" data-icon="heroicons:arrow-trending-up" data-width="16"></span>
+                                        <span class="text-sm font-medium">+8%</span>
+                                    </div>
+                                    <div class="w-16 h-8 bg-success/10 rounded flex items-center justify-center">
+                                        <div class="sparkline-chart" data-values="[100,120,110,140,150,135,160]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Engagement Rate Card -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft" data-repeatable="true">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                                        <span class="iconify text-accent" data-icon="heroicons:heart" data-width="24"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-3xl font-bold text-base-content">4.2%</div>
+                                        <div class="text-sm text-base-content/70">Engagement Rate</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1 text-error">
+                                        <span class="iconify" data-icon="heroicons:arrow-trending-down" data-width="16"></span>
+                                        <span class="text-sm font-medium">-2%</span>
+                                    </div>
+                                    <div class="w-16 h-8 bg-error/10 rounded flex items-center justify-center">
+                                        <div class="sparkline-chart" data-values="[4.5,4.3,4.6,4.1,3.9,4.0,4.2]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Follower Growth Card -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft" data-repeatable="true">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                        <span class="iconify text-secondary" data-icon="heroicons:users" data-width="24"></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-3xl font-bold text-base-content">+1,847</div>
+                                        <div class="text-sm text-base-content/70">Follower Growth</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1 text-success">
+                                        <span class="iconify" data-icon="heroicons:arrow-trending-up" data-width="16"></span>
+                                        <span class="text-sm font-medium">+15%</span>
+                                    </div>
+                                    <div class="w-16 h-8 bg-success/10 rounded flex items-center justify-center">
+                                        <div class="sparkline-chart" data-values="[1200,1350,1400,1600,1750,1800,1847]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Performance Charts -->
+                <section>
+                    <h2 class="text-2xl font-bold text-base-content mb-6">Performance Charts</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Engagement Over Time Chart -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-semibold text-base-content">Engagement Over Time</h3>
+                                    <button class="btn btn-ghost btn-sm" onclick="downloadChartData(&#39;engagement&#39;)">
+                                        <span class="iconify" data-icon="heroicons:arrow-down-tray" data-width="16"></span>
+                                        Download
+                                    </button>
+                                </div>
+                                <div class="h-64 bg-base-200/50 rounded-lg flex items-center justify-center">
+                                    <canvas id="engagementChart" class="w-full h-full"></canvas>
+                                </div>
+                                <div class="flex items-center gap-4 mt-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-primary rounded-full"></div>
+                                        <span class="text-base-content/70">Likes</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-accent rounded-full"></div>
+                                        <span class="text-base-content/70">Comments</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-info rounded-full"></div>
+                                        <span class="text-base-content/70">Shares</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reach by Post Type Chart -->
+                        <div class="card bg-base-100 border border-base-300 shadow-soft">
+                            <div class="card-body p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-semibold text-base-content">Reach by Post Type</h3>
+                                    <button class="btn btn-ghost btn-sm" onclick="downloadChartData(&#39;reach&#39;)">
+                                        <span class="iconify" data-icon="heroicons:arrow-down-tray" data-width="16"></span>
+                                        Download
+                                    </button>
+                                </div>
+                                <div class="h-64 bg-base-200/50 rounded-lg flex items-center justify-center">
+                                    <canvas id="reachChart" class="w-full h-full"></canvas>
+                                </div>
+                                <div class="flex items-center gap-4 mt-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-primary rounded-full"></div>
+                                        <span class="text-base-content/70">Images</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-accent rounded-full"></div>
+                                        <span class="text-base-content/70">Videos</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-info rounded-full"></div>
+                                        <span class="text-base-content/70">Text</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Top Content Performance Table -->
+                <section>
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-base-content">Top Performing Content</h2>
+                        <div class="form-control">
+                            <select class="select select-bordered select-sm w-40" id="sortSelect" onchange="sortTable()">
+                                <option value="likes">Sort by Likes</option>
+                                <option value="comments">Sort by Comments</option>
+                                <option value="shares">Sort by Shares</option>
+                                <option value="date">Sort by Date</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card bg-base-100 border border-base-300 shadow-soft">
+                        <div class="card-body p-0">
+                            <div class="overflow-x-auto">
+                                <table class="table table-zebra">
+                                    <thead class="bg-base-200">
+                                        <tr>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;thumbnail&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Post</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;platform&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Platform</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;likes&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Likes</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;comments&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Comments</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;shares&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Shares</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th class="cursor-pointer hover:bg-base-300" onclick="sortTableColumn(&#39;date&#39;)">
+                                                <div class="flex items-center gap-2">
+                                                    <span>Date</span>
+                                                    <span class="iconify" data-icon="heroicons:arrows-up-down" data-width="16"></span>
+                                                </div>
+                                            </th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="contentTableBody">
+                                        <tr data-repeatable="true">
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="avatar">
+                                                        <div class="w-12 h-12 rounded-lg">
+                                                            <img alt="Post thumbnail" data-src="placehold.co/48x48.png?text=Post+1">
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-medium text-base-content">Summer vacation tips for families...</div>
+                                                        <div class="text-sm text-base-content/70">Travel &amp;amp; Lifestyle</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="iconify text-blue-600" data-icon="mdi:facebook" data-width="20"></span>
+                                                    <span class="text-sm">Facebook</span>
+                                                </div>
+                                            </td>
+                                            <td class="font-medium">2,847</td>
+                                            <td class="font-medium">156</td>
+                                            <td class="font-medium">89</td>
+                                            <td class="text-sm text-base-content/70">2024-10-08</td>
+                                            <td>
+                                                <button class="btn btn-ghost btn-sm" onclick="viewFullPost(&#39;post_1&#39;)">
+                                                    <span class="iconify" data-icon="heroicons:eye" data-width="16"></span>
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr data-repeatable="true">
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="avatar">
+                                                        <div class="w-12 h-12 rounded-lg">
+                                                            <img alt="Post thumbnail" data-src="placehold.co/48x48.png?text=Post+2">
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-medium text-base-content">10 productivity hacks for remote work</div>
+                                                        <div class="text-sm text-base-content/70">Business &amp;amp; Career</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="iconify text-blue-400" data-icon="mdi:linkedin" data-width="20"></span>
+                                                    <span class="text-sm">LinkedIn</span>
+                                                </div>
+                                            </td>
+                                            <td class="font-medium">1,923</td>
+                                            <td class="font-medium">234</td>
+                                            <td class="font-medium">67</td>
+                                            <td class="text-sm text-base-content/70">2024-10-07</td>
+                                            <td>
+                                                <button class="btn btn-ghost btn-sm" onclick="viewFullPost(&#39;post_2&#39;)">
+                                                    <span class="iconify" data-icon="heroicons:eye" data-width="16"></span>
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr data-repeatable="true">
+                                            <td>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="avatar">
+                                                        <div class="w-12 h-12 rounded-lg">
+                                                            <img alt="Post thumbnail" data-src="placehold.co/48x48.png?text=Post+3">
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-medium text-base-content">Behind the scenes: Product launch</div>
+                                                        <div class="text-sm text-base-content/70">Business &amp;amp; Updates</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="iconify text-pink-500" data-icon="mdi:instagram" data-width="20"></span>
+                                                    <span class="text-sm">Instagram</span>
+                                                </div>
+                                            </td>
+                                            <td class="font-medium">3,456</td>
+                                            <td class="font-medium">89</td>
+                                            <td class="font-medium">124</td>
+                                            <td class="text-sm text-base-content/70">2024-10-06</td>
+                                            <td>
+                                                <button class="btn btn-ghost btn-sm" onclick="viewFullPost(&#39;post_3&#39;)">
+                                                    <span class="iconify" data-icon="heroicons:eye" data-width="16"></span>
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div class="flex items-center justify-between p-6 border-t border-base-300">
+                                <div class="text-sm text-base-content/70">
+                                    Showing 1 to 3 of 247 results
+                                </div>
+                                <div class="join">
+                                    <button class="join-item btn btn-sm" onclick="previousPage()">
+                                        <span class="iconify" data-icon="heroicons:chevron-left" data-width="16"></span>
+                                    </button>
+                                    <button class="join-item btn btn-sm btn-active">1</button>
+                                    <button class="join-item btn btn-sm" onclick="goToPage(2)">2</button>
+                                    <button class="join-item btn btn-sm" onclick="goToPage(3)">3</button>
+                                    <span class="join-item btn btn-sm btn-disabled">...</span>
+                                    <button class="join-item btn btn-sm" onclick="goToPage(83)">83</button>
+                                    <button class="join-item btn btn-sm" onclick="nextPage()">
+                                        <span class="iconify" data-icon="heroicons:chevron-right" data-width="16"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div data-section-id="common_footer" data-section-type="common_footer">
+<footer class="footer footer-center p-8 bg-base-200 text-base-content border-t border-base-300">
+<div class="grid grid-flow-col gap-6">
+<a class="link link-hover focus-primary">About</a>
+<a class="link link-hover focus-primary">Help Center</a>
+<a class="link link-hover focus-primary">Contact</a>
+<a class="link link-hover focus-primary">Privacy Policy</a>
+<a class="link link-hover focus-primary">Terms of Service</a>
+</div>
+<div class="grid grid-flow-col gap-4">
+<a class="link link-hover focus-primary" aria-label="Twitter">
+<span class="iconify" data-icon="simple-icons:twitter" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Facebook">
+<span class="iconify" data-icon="simple-icons:facebook" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Instagram">
+<span class="iconify" data-icon="simple-icons:instagram" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="LinkedIn">
+<span class="iconify" data-icon="simple-icons:linkedin" data-width="20"></span>
+</a>
+</div>
+<div class="text-center">
+<p>© 2024 Social Hub. All rights reserved.</p>
+<p class="text-sm opacity-70 mt-1">Streamline your social media management</p>
+</div>
+</footer>
+</div>
+
+    <script>
+(function() {
+&#39;use strict&#39;;
+
+// Initialize global namespace
+window.APP_GLOBALS = window.APP_GLOBALS || {};
+
+// Global navigation utility
+window.navigateTo = function(targetPageId) {
+const isInIframe = window.self !== window.top;
+const targetFileName = `${targetPageId}.html`;
+
+if (isInIframe) {
+window.parent.postMessage({
+type: &#39;iframeNavigation&#39;,
+targetPageId: targetPageId
+}, &#39;*&#39;);
+} else {
+window.location.href = targetFileName;
+}
+};
+
+// Sidebar collapse/expand utility
+window.toggleSidebar = function() {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+const isCollapsed = sidebar.classList.contains(&#39;sidebar-collapsed&#39;);
+
+if (isCollapsed) {
+sidebar.classList.remove(&#39;sidebar-collapsed&#39;);
+sidebar.classList.add(&#39;sidebar-expanded&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;expanded&#39;);
+} else {
+sidebar.classList.remove(&#39;sidebar-expanded&#39;);
+sidebar.classList.add(&#39;sidebar-collapsed&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;collapsed&#39;);
+}
+};
+
+// Initialize sidebar state from localStorage
+window.initSidebarState = function() {
+const savedState = localStorage.getItem(&#39;sidebarState&#39;) || &#39;expanded&#39;;
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (sidebar) {
+sidebar.classList.add(savedState === &#39;collapsed&#39; ? &#39;sidebar-collapsed&#39; : &#39;sidebar-expanded&#39;);
+}
+};
+
+// Notification utilities
+window.showNotification = function(message, type = &#39;info&#39;) {
+const notification = document.createElement(&#39;div&#39;);
+notification.className = `alert alert-${type} fixed top-4 right-4 w-96 z-50 shadow-lg`;
+notification.innerHTML = `
+<div class="flex items-center gap-2">
+<span class="iconify" data-icon="heroicons:information-circle-solid" data-width="20"></span>
+<span>${message}</span>
+</div>
+`;
+
+document.body.appendChild(notification);
+
+setTimeout(() => {
+if (notification.parentNode) {
+notification.remove();
+}
+}, 5000);
+};
+
+// Initialize components when DOM is loaded
+document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+initSidebarState();
+});
+
+})();
+</script>
+    <script>
+(function() {
+    &#39;use strict&#39;;
+
+    // Initialize page
+    document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+        // Set breadcrumbs
+        window.updateBreadcrumbs({
+            current: &#39;Analytics&#39;,
+            category: &#39;Dashboard&#39;,
+            categoryPageId: &#39;dashboard_page&#39;,
+            icon: &#39;heroicons:chart-bar-square&#39;
+        });
+
+        // Set active sidebar item
+        if (window.setActiveSidebarItem) {
+            window.setActiveSidebarItem(&#39;analytics_page&#39;);
+        }
+
+        // Initialize charts (placeholder functionality)
+        initializeCharts();
+    });
+
+    // Filter application
+    window.applyFilters = function() {
+        const dateRange = document.getElementById(&#39;dateRangeSelect&#39;).value;
+        const platform = document.getElementById(&#39;platformSelect&#39;).value;
+        
+        // Show loading state
+        showNotification(&#39;Applying filters...&#39;, &#39;info&#39;);
+        
+        // Simulate API call
+        setTimeout(() => {
+            showNotification(&#39;Filters applied successfully&#39;, &#39;success&#39;);
+            // In a real app, this would update the charts and table data
+            updateMetrics(dateRange, platform);
+        }, 1000);
+    };
+
+    // Chart data download
+    window.downloadChartData = function(chartType) {
+        showNotification(`Downloading ${chartType} chart data...`, &#39;info&#39;);
+        
+        // Simulate download
+        setTimeout(() => {
+            showNotification(&#39;Chart data downloaded successfully&#39;, &#39;success&#39;);
+        }, 1500);
+    };
+
+    // Table sorting
+    window.sortTable = function() {
+        const sortBy = document.getElementById(&#39;sortSelect&#39;).value;
+        showNotification(`Sorting by ${sortBy}...`, &#39;info&#39;);
+        
+        // Simulate sorting
+        setTimeout(() => {
+            showNotification(&#39;Table sorted successfully&#39;, &#39;success&#39;);
+        }, 500);
+    };
+
+    window.sortTableColumn = function(column) {
+        showNotification(`Sorting by ${column}...`, &#39;info&#39;);
+        
+        // Simulate column sorting
+        setTimeout(() => {
+            showNotification(&#39;Column sorted successfully&#39;, &#39;success&#39;);
+        }, 500);
+    };
+
+    // View full post
+    window.viewFullPost = function(postId) {
+        showNotification(`Opening post ${postId}...`, &#39;info&#39;);
+        // In a real app, this would open a modal or navigate to post details
+    };
+
+    // Pagination functions
+    window.previousPage = function() {
+        showNotification(&#39;Loading previous page...&#39;, &#39;info&#39;);
+    };
+
+    window.nextPage = function() {
+        showNotification(&#39;Loading next page...&#39;, &#39;info&#39;);
+    };
+
+    window.goToPage = function(pageNumber) {
+        showNotification(`Loading page ${pageNumber}...`, &#39;info&#39;);
+    };
+
+    // Initialize charts (placeholder)
+    function initializeCharts() {
+        // In a real application, this would initialize actual chart libraries
+        // like Chart.js, D3.js, or similar
+        console.log(&#39;Charts initialized&#39;);
+    }
+
+    // Update metrics based on filters
+    function updateMetrics(dateRange, platform) {
+        // Simulate metric updates
+        console.log(`Updating metrics for ${dateRange} days on ${platform} platform`);
+    }
+
+    // Tooltip functionality for metric cards
+    document.addEventListener(&#39;mouseover&#39;, function(e) {
+        if (e.target.closest(&#39;.tooltip-custom&#39;)) {
+            // Handle custom tooltip display
+        }
+    });
+
+    // Chart legend interaction (placeholder)
+    document.addEventListener(&#39;click&#39;, function(e) {
+        if (e.target.closest(&#39;.chart-legend-item&#39;)) {
+            const item = e.target.closest(&#39;.chart-legend-item&#39;);
+            item.style.opacity = item.style.opacity === &#39;0.5&#39; ? &#39;1&#39; : &#39;0.5&#39;;
+        }
+    });
+
+})();
+</script>
+
+<script>
+    setTimeout(() => {
+      Holder.run({
+        domain: "placehold.co"
+      })
+    }, 100)
+  </script></body></html>'></iframe>
+                    </div>
+                  </div>
+
+                </body>
+                </html>
+            

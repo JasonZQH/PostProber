@@ -1,0 +1,1036 @@
+
+                <!DOCTYPE html>
+                <html lang="zh">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>Edit Scheduled Post</title>
+                  <style>
+                    *,
+                    *::before,
+                    *::after {
+                      box-sizing: border-box;
+                      margin: 0;
+                    }
+                    .iframe-outer {
+                      position: fixed;
+                      top: 0;
+                      left: 0;
+                      bottom: 0;
+                      right: 0;
+                      display: flex;
+                      justify-content: center;
+                      background-color: #E0E0E0;
+                    }
+                    .iframe-wrapper {
+                      width: 100%;
+                      height: 100%;
+                      margin: 0 auto;
+                      transform-origin: center top;
+                      flex-shrink: 0;
+                    }
+                    #dynamicIframe {
+                      border: none;
+                      width: 100%;
+                      height: 100%;
+                    }
+                  </style>
+                  <script>
+                const width = 1920
+                const height = 1080
+                const resolutionRatio = width && height ? width / height : 1
+                const pageNameMap = {
+                  'dashboard_page': 'Dashboard',
+    'compose_post_page': 'Compose Post',
+    'schedule_overview_page': 'Schedule Overview',
+    'edit_scheduled_post_page': 'Edit Scheduled Post',
+    'analytics_page': 'Analytics'
+                }
+                function setIframeSize(w, h) {
+                  const currentContainerRadio = w / h
+                  let widthValue = w
+                  let heightValue = h
+                  let zoom = 1
+                  if (currentContainerRadio > resolutionRatio) {
+                    widthValue = h * resolutionRatio
+                    heightValue = h
+                  } else {
+                    widthValue = w
+                    heightValue = w / resolutionRatio
+                  }
+                  zoom = width ? widthValue / width : 1
+                  return {
+                    width: widthValue / zoom + 'px',
+                    height: heightValue / zoom + 'px',
+                    zoom,
+                  }
+                }
+                function adjustIframeSize() {
+                  const iframeWrapper = document.querySelector(".iframe-wrapper")
+                  const { width, height, zoom } = setIframeSize(window.innerWidth, window.innerHeight)
+                  iframeWrapper.style.height = height
+                  iframeWrapper.style.width = width
+                  iframeWrapper.style.transform = 'scale(' + zoom + ')'
+                }
+                function sanitizeFilename(name) {
+                  return name.replace(/[\/:*?"<>|]/g, '_')
+                }
+                function handlePostMessage(event) {
+                  if (!event.data) {
+                    return
+                  }
+                  const { type, targetPageId } = event.data
+                  const targetPageName = pageNameMap[targetPageId]
+                  if (type === "iframeNavigation" && targetPageId && targetPageName) {
+                    window.location.href = targetPageName + '.html'
+                  }
+                }
+                window.addEventListener('message', handlePostMessage)
+                window.onload = adjustIframeSize
+                window.onresize = adjustIframeSize
+                window.onunload = () => {
+                  window.removeEventListener('message', handlePostMessage)
+                }
+              </script>
+                </head>
+                <body>
+                  <div class="iframe-outer">
+                    <div class="iframe-wrapper">
+                      <iframe id="dynamicIframe" srcdoc='<html lang="en" data-theme="light"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Scheduled Post - Social Media Manager</title>
+    <link href="./assets/static/uxbot/daisyui@5.css" rel="stylesheet" type="text/css">
+    <script src="./assets/static/uxbot/tailwind-browser@4.js"></script>
+    <link href="./assets/static/uxbot/daisyui-themes.css" rel="stylesheet" type="text/css">
+    <script src="./assets/3/3.1.1/iconify.min.js"></script>
+    <style>
+/* DaisyUI Theme Variables Customization */
+:root {
+/* Light theme customization for social media management app */
+--color-primary: rgba(59, 130, 246, 1); /* Blue #3B82F6 */
+--color-primary-content: rgba(255, 255, 255, 1);
+--color-secondary: rgba(107, 114, 128, 1); /* Gray #6B7280 */
+--color-secondary-content: rgba(255, 255, 255, 1);
+--color-accent: rgba(16, 185, 129, 1); /* Emerald #10B981 */
+--color-accent-content: rgba(255, 255, 255, 1);
+--color-base-100: rgba(255, 255, 255, 1);
+--color-base-200: rgba(249, 250, 251, 1); /* #F9FAFB */
+--color-base-300: rgba(229, 231, 235, 1); /* #E5E7EB */
+--color-base-content: rgba(31, 41, 55, 1); /* #1F2937 */
+--color-success: rgba(16, 185, 129, 1);
+--color-warning: rgba(245, 158, 11, 1);
+--color-error: rgba(239, 68, 68, 1);
+--color-info: rgba(59, 130, 246, 1);
+--radius-box: 0.5rem; /* 8px for modern rounded corners */
+--radius-field: 0.5rem;
+--border: 1px;
+}
+
+/* Global component styles */
+.transition-width {
+transition: width 0.3s ease-in-out;
+}
+
+.nav-hover {
+transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.shadow-soft {
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Header height consistency */
+.header-height {
+height: 64px;
+}
+
+/* Sidebar dimensions */
+.sidebar-expanded {
+width: 280px;
+}
+
+.sidebar-collapsed {
+width: 80px;
+}
+
+/* Focus styles for accessibility */
+.focus-primary:focus {
+outline: 2px solid var(--color-primary);
+outline-offset: 2px;
+}
+
+/* Apple-inspired minimalist spacing */
+.space-apple {
+padding: 2rem;
+}
+
+.space-apple-lg {
+padding: 3rem;
+}
+
+/* Clean card styling */
+.card-clean {
+border: 1px solid var(--color-base-300);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+</style>
+    <style>
+/* Page-specific styles for edit scheduled post page */
+.platform-toggle:hover {
+    transform: translateY(-1px);
+    transition: transform 0.15s ease-in-out;
+}
+
+.platform-toggle input:checked + .flex {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+}
+
+.existing-media img {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-bar-wrapper {
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Character counter styling */
+#character-counter.warning {
+    color: var(--color-warning);
+}
+
+#character-counter.error {
+    color: var(--color-error);
+}
+
+/* AI suggestion button hover effects */
+.btn-ghost:hover {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+    border-color: var(--color-primary);
+}
+
+/* Version history hover effect */
+.version-item:hover {
+    background-color: var(--color-base-200);
+}
+
+/* Save button success animation */
+@keyframes saveSuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.save-success {
+    animation: saveSuccess 0.3s ease-in-out;
+}
+
+/* Platform preview styling */
+.platform-preview {
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-box);
+    padding: 1rem;
+    background-color: var(--color-base-100);
+    margin-top: 0.5rem;
+}
+
+/* Focus states for better accessibility */
+.textarea:focus,
+.input:focus,
+.file-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-color: var(--color-primary);
+}
+
+/* Smooth transitions for all interactive elements */
+.btn,
+.toggle,
+.input,
+.textarea,
+.file-input,
+.platform-toggle {
+    transition: all 0.15s ease-in-out;
+}
+</style>
+<script src="./assets/static/uxbot/25_6/holder.js"></script></head>
+<body class="bg-base-100 min-h-screen flex flex-col">
+    <!-- Header -->
+    <div class="header-wrapper">
+        <div data-section-id="common_header" data-section-type="common_header">
+<div class="navbar bg-base-100 shadow-soft border-b border-base-300 header-height px-6">
+<!-- Left section: Menu toggle and Logo -->
+<div class="navbar-start">
+<button class="btn btn-ghost btn-circle focus-primary" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+<span class="iconify" data-icon="heroicons:bars-3" data-width="24"></span>
+</button>
+<div class="flex items-center ml-4">
+<img alt="Social Media Manager Logo" class="w-10 h-10 rounded-lg" data-src="placehold.co/40x40.png?text=SM">
+<span class="ml-3 text-xl font-semibold text-primary hidden lg:block">Social Hub</span>
+</div>
+</div>
+
+<!-- Center section: Main navigation -->
+<div class="navbar-center hidden xl:flex">
+<ul class="menu menu-horizontal px-1 gap-2">
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;dashboard_page&#39;)">Dashboard</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;compose_post_page&#39;)">Compose</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;schedule_overview_page&#39;)">Schedule</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;analytics_page&#39;)">Analytics</a></li>
+<li><a class="nav-hover focus-primary" onclick="navigateTo(&#39;accounts_page&#39;)">Accounts</a></li>
+</ul>
+</div>
+
+<!-- Right section: Search, notifications, user profile -->
+<div class="navbar-end">
+<!-- Global search -->
+<div class="form-control hidden md:block mr-4">
+<div class="join">
+<input type="text" placeholder="Search posts..." class="input input-bordered input-sm join-item w-48 focus-primary">
+<button class="btn btn-sm join-item btn-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="16"></span>
+</button>
+</div>
+</div>
+
+<!-- Search icon for mobile -->
+<button class="btn btn-ghost btn-circle md:hidden focus-primary" aria-label="Search">
+<span class="iconify" data-icon="heroicons:magnifying-glass" data-width="20"></span>
+</button>
+
+<!-- Notifications -->
+<div class="indicator mr-2">
+<span class="indicator-item badge badge-accent badge-sm">3</span>
+<button class="btn btn-ghost btn-circle focus-primary" aria-label="Notifications">
+<span class="iconify" data-icon="heroicons:bell" data-width="20"></span>
+</button>
+</div>
+
+<!-- User profile dropdown -->
+<div class="dropdown dropdown-end">
+<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar focus-primary">
+<div class="w-10 rounded-full">
+<img alt="User avatar" data-src="placehold.co/40x40.png?text=User">
+</div>
+</div>
+<ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-soft bg-base-100 rounded-box w-52">
+<li class="menu-title">
+<span>Account</span>
+</li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:user" data-width="16"></span>
+Profile Settings
+</a></li>
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="16"></span>
+Settings
+</a></li>
+<div class="divider my-1"></div>
+<li><a onclick="navigateTo(&#39;login_page&#39;)" class="nav-hover focus-primary text-error">
+<span class="iconify" data-icon="heroicons:arrow-right-on-rectangle" data-width="16"></span>
+Sign Out
+</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex flex-1">
+        <!-- Sidebar -->
+        <div class="sidebar-wrapper">
+            <div data-section-id="common_sidebar" data-section-type="common_sidebar">
+<div class="h-full bg-base-100 border-r border-base-300 transition-width flex flex-col">
+<!-- Sidebar content -->
+<div class="flex-1 overflow-y-auto">
+<ul class="menu p-4 gap-2">
+<!-- Dashboard -->
+<li>
+<a onclick="navigateTo(&#39;dashboard_page&#39;)" class="nav-hover focus-primary group" data-current-page="dashboard_page">
+<span class="iconify" data-icon="heroicons:home" data-width="20"></span>
+<span class="sidebar-text font-medium">Dashboard</span>
+</a>
+</li>
+
+<!-- Compose -->
+<li>
+<a onclick="navigateTo(&#39;compose_post_page&#39;)" class="nav-hover focus-primary group" data-current-page="compose_post_page">
+<span class="iconify" data-icon="heroicons:pencil-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Compose Post</span>
+</a>
+</li>
+
+<!-- Schedule Management -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:calendar-days" data-width="20"></span>
+<span class="sidebar-text font-medium">Schedule</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;schedule_overview_page&#39;)" class="nav-hover focus-primary text-sm">Schedule Overview</a></li>
+<li><a onclick="navigateTo(&#39;edit_scheduled_post_page&#39;)" class="nav-hover focus-primary text-sm">Edit Posts</a></li>
+</ul>
+</details>
+</li>
+
+<!-- Analytics -->
+<li>
+<a onclick="navigateTo(&#39;analytics_page&#39;)" class="nav-hover focus-primary group" data-current-page="analytics_page">
+<span class="iconify" data-icon="heroicons:chart-bar-square" data-width="20"></span>
+<span class="sidebar-text font-medium">Analytics</span>
+</a>
+</li>
+
+<!-- Accounts -->
+<li>
+<a onclick="navigateTo(&#39;accounts_page&#39;)" class="nav-hover focus-primary group" data-current-page="accounts_page">
+<span class="iconify" data-icon="heroicons:link" data-width="20"></span>
+<span class="sidebar-text font-medium">Accounts</span>
+</a>
+</li>
+
+<!-- Settings -->
+<li>
+<details class="sidebar-dropdown">
+<summary class="nav-hover focus-primary group">
+<span class="iconify" data-icon="heroicons:cog-6-tooth" data-width="20"></span>
+<span class="sidebar-text font-medium">Settings</span>
+</summary>
+<ul class="sidebar-submenu ml-6 mt-2 space-y-1">
+<li><a onclick="navigateTo(&#39;settings_page&#39;)" class="nav-hover focus-primary text-sm">Settings Dashboard</a></li>
+<li><a onclick="navigateTo(&#39;profile_settings_page&#39;)" class="nav-hover focus-primary text-sm">Profile</a></li>
+<li><a onclick="navigateTo(&#39;ai_settings_page&#39;)" class="nav-hover focus-primary text-sm">AI Settings</a></li>
+<li><a onclick="navigateTo(&#39;notifications_settings_page&#39;)" class="nav-hover focus-primary text-sm">Notifications</a></li>
+<li><a onclick="navigateTo(&#39;privacy_settings_page&#39;)" class="nav-hover focus-primary text-sm">Privacy</a></li>
+</ul>
+</details>
+</li>
+</ul>
+</div>
+
+<!-- Sidebar footer -->
+<div class="p-4 border-t border-base-300">
+<div class="text-center">
+<button class="btn btn-sm btn-ghost w-full nav-hover focus-primary">
+<span class="iconify" data-icon="heroicons:question-mark-circle" data-width="16"></span>
+<span class="sidebar-text text-xs">Help &amp;amp; Support</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<style>
+[data-section-id="common_sidebar"] {
+position: sticky;
+top: 0;
+height: 100vh;
+z-index: 40;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed {
+width: 80px;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-text {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-dropdown > summary::after {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-collapsed .sidebar-submenu {
+display: none;
+}
+
+[data-section-id="common_sidebar"].sidebar-expanded {
+width: 280px;
+}
+
+[data-section-id="common_sidebar"] .sidebar-dropdown[open] > summary {
+background-color: var(--color-base-200);
+}
+
+[data-section-id="common_sidebar"] .menu li > *:where(.active) {
+background-color: var(--color-primary);
+color: var(--color-primary-content);
+}
+</style>
+
+<script>
+(function() {
+// Set active navigation item based on current page
+window.setActiveSidebarItem = function(pageId) {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+// Remove active class from all items
+const allItems = sidebar.querySelectorAll(&#39;.menu a&#39;);
+allItems.forEach(item => item.classList.remove(&#39;active&#39;));
+
+// Add active class to current page
+const currentItem = sidebar.querySelector(`[data-current-page="${pageId}"]`);
+if (currentItem) {
+currentItem.classList.add(&#39;active&#39;);
+}
+};
+})();
+</script>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content-wrapper flex-1 flex flex-col">
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs-wrapper">
+                <div data-section-id="common_breadcrumbs" data-section-type="common_section">
+<div class="breadcrumbs text-sm py-4 px-6 bg-base-100 border-b border-base-300">
+<ul id="breadcrumb-list">
+<!-- Breadcrumb items will be dynamically inserted here -->
+</ul>
+</div>
+</div>
+
+<style>
+[data-section-id="common_breadcrumbs"] .breadcrumbs a {
+color: var(--color-primary);
+transition: color 0.15s ease-in-out;
+}
+
+[data-section-id="common_breadcrumbs"] .breadcrumbs a:hover {
+color: var(--color-secondary);
+}
+</style>
+
+<script>
+(function() {
+// Breadcrumb utility functions
+window.setBreadcrumbs = function(breadcrumbItems) {
+const breadcrumbList = document.getElementById(&#39;breadcrumb-list&#39;);
+if (!breadcrumbList) return;
+
+breadcrumbList.innerHTML = &#39;&#39;;
+
+breadcrumbItems.forEach((item, index) => {
+const li = document.createElement(&#39;li&#39;);
+
+if (item.pageId &amp;&amp; index < breadcrumbItems.length - 1) {
+// Clickable breadcrumb item
+const a = document.createElement(&#39;a&#39;);
+a.onclick = () => navigateTo(item.pageId);
+a.className = &#39;focus-primary cursor-pointer&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+a.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+a.appendChild(textSpan);
+li.appendChild(a);
+} else {
+// Current page (non-clickable)
+const span = document.createElement(&#39;span&#39;);
+span.className = &#39;text-base-content/70&#39;;
+
+if (item.icon) {
+const iconSpan = document.createElement(&#39;span&#39;);
+iconSpan.className = &#39;iconify mr-1&#39;;
+iconSpan.setAttribute(&#39;data-icon&#39;, item.icon);
+iconSpan.setAttribute(&#39;data-width&#39;, &#39;16&#39;);
+span.appendChild(iconSpan);
+}
+
+const textSpan = document.createElement(&#39;span&#39;);
+textSpan.textContent = item.text;
+span.appendChild(textSpan);
+li.appendChild(span);
+}
+
+breadcrumbList.appendChild(li);
+});
+};
+
+// Example usage function for pages to call
+window.updateBreadcrumbs = function(currentPageInfo) {
+const defaultBreadcrumbs = [
+{ text: &#39;Dashboard&#39;, pageId: &#39;dashboard_page&#39;, icon: &#39;heroicons:home&#39; }
+];
+
+if (currentPageInfo.category) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.category,
+pageId: currentPageInfo.categoryPageId
+});
+}
+
+if (currentPageInfo.subcategory) {
+defaultBreadcrumbs.push({
+text: currentPageInfo.subcategory,
+pageId: currentPageInfo.subcategoryPageId
+});
+}
+
+defaultBreadcrumbs.push({
+text: currentPageInfo.current,
+icon: currentPageInfo.icon
+});
+
+setBreadcrumbs(defaultBreadcrumbs);
+};
+})();
+</script>
+            </div>
+
+            <!-- Edit Post Header -->
+            <div class="edit-header-wrapper px-8 py-6 bg-base-100">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-3xl font-bold text-base-content mb-2">Edit Scheduled Post</h1>
+                    <p class="text-base-content/70">Originally scheduled for December 15, 2024 at 2:30 PM</p>
+                </div>
+            </div>
+
+            <!-- Compose Post Section -->
+            <div class="compose-section-wrapper flex-1 px-8 pb-32 bg-base-100">
+                <div class="max-w-4xl mx-auto">
+                    <div class="card bg-base-100 border border-base-300 shadow-soft">
+                        <div class="card-body space-apple">
+                            <!-- Post Content Editor -->
+                            <div class="form-control mb-8">
+                                <label class="label">
+                                    <span class="label-text text-lg font-semibold">Post Content</span>
+                                    <span class="label-text-alt text-base-content/60" id="character-counter">280 characters remaining</span>
+                                </label>
+                                <textarea class="textarea textarea-bordered h-32 text-base leading-relaxed focus:border-primary transition-colors" placeholder="What&#39;s on your mind?" id="post-content">Check out our latest product launch! 🚀 We&#39;re excited to share this innovation with you. #ProductLaunch #Innovation #TechNews</textarea>
+                            </div>
+
+                            <!-- AI Content Suggestions -->
+                            <div class="mb-8">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <span class="text-lg font-semibold">AI Suggestions</span>
+                                    <div class="tooltip" data-tip="AI-powered content optimization">
+                                        <span class="iconify text-base-content/50" data-icon="heroicons:information-circle" data-width="20"></span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-3">
+                                    <button class="btn btn-ghost btn-sm border border-base-300 hover:border-primary transition-colors">
+                                        <span class="iconify" data-icon="heroicons:sparkles" data-width="16"></span>
+                                        Optimize for Twitter
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm border border-base-300 hover:border-primary transition-colors">
+                                        <span class="iconify" data-icon="heroicons:hashtag" data-width="16"></span>
+                                        Generate Hashtags
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm border border-base-300 hover:border-primary transition-colors">
+                                        <span class="iconify" data-icon="heroicons:language" data-width="16"></span>
+                                        Improve Tone
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Platform Selection -->
+                            <div class="mb-8">
+                                <label class="label">
+                                    <span class="label-text text-lg font-semibold">Select Platforms</span>
+                                </label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <label class="label cursor-pointer border border-base-300 rounded-lg p-4 hover:border-primary transition-colors platform-toggle" data-platform="twitter">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="iconify text-info" data-icon="mdi:twitter" data-width="24"></span>
+                                            <span class="label-text font-medium">Twitter</span>
+                                            <input type="checkbox" class="toggle toggle-primary" checked="">
+                                        </div>
+                                    </label>
+                                    <label class="label cursor-pointer border border-base-300 rounded-lg p-4 hover:border-primary transition-colors platform-toggle" data-platform="facebook">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="iconify text-primary" data-icon="mdi:facebook" data-width="24"></span>
+                                            <span class="label-text font-medium">Facebook</span>
+                                            <input type="checkbox" class="toggle toggle-primary" checked="">
+                                        </div>
+                                    </label>
+                                    <label class="label cursor-pointer border border-base-300 rounded-lg p-4 hover:border-primary transition-colors platform-toggle" data-platform="instagram">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="iconify text-accent" data-icon="mdi:instagram" data-width="24"></span>
+                                            <span class="label-text font-medium">Instagram</span>
+                                            <input type="checkbox" class="toggle toggle-primary">
+                                        </div>
+                                    </label>
+                                    <label class="label cursor-pointer border border-base-300 rounded-lg p-4 hover:border-primary transition-colors platform-toggle" data-platform="linkedin">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="iconify text-info" data-icon="mdi:linkedin" data-width="24"></span>
+                                            <span class="label-text font-medium">LinkedIn</span>
+                                            <input type="checkbox" class="toggle toggle-primary">
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Media Upload -->
+                            <div class="mb-8">
+                                <label class="label">
+                                    <span class="label-text text-lg font-semibold">Media</span>
+                                </label>
+                                <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+                                    <div class="existing-media mb-4">
+                                        <img alt="Product launch preview" class="w-32 h-24 object-cover rounded-lg mx-auto mb-2" data-src="placehold.co/400x300.png?text=Product+Launch+Image">
+                                        <p class="text-sm text-base-content/70">product-launch.jpg</p>
+                                    </div>
+                                    <div class="flex flex-col items-center gap-2">
+                                        <span class="iconify text-base-content/50" data-icon="heroicons:photo" data-width="32"></span>
+                                        <p class="text-base-content/70">Click to replace image or drag and drop</p>
+                                        <p class="text-sm text-base-content/50">PNG, JPG, GIF up to 10MB</p>
+                                        <input type="file" class="file-input file-input-bordered file-input-sm w-full max-w-xs mt-2" accept="image/*,video/*">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Scheduling Options -->
+                            <div class="mb-8">
+                                <label class="label">
+                                    <span class="label-text text-lg font-semibold">Schedule</span>
+                                </label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="form-control">
+                                        <label class="label">
+                                            <span class="label-text">Date</span>
+                                        </label>
+                                        <input type="date" class="input input-bordered focus:border-primary transition-colors" value="2024-12-15">
+                                    </div>
+                                    <div class="form-control">
+                                        <label class="label">
+                                            <span class="label-text">Time</span>
+                                        </label>
+                                        <input type="time" class="input input-bordered focus:border-primary transition-colors" value="14:30">
+                                    </div>
+                                </div>
+                                <div class="form-control mt-4">
+                                    <label class="label cursor-pointer justify-start gap-4">
+                                        <input type="checkbox" class="toggle toggle-primary">
+                                        <span class="label-text">Publish immediately instead of scheduling</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Version History -->
+                            <div class="mb-8">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-lg font-semibold">Version History</span>
+                                    <button class="btn btn-ghost btn-sm">
+                                        <span class="iconify" data-icon="heroicons:clock" data-width="16"></span>
+                                        View All
+                                    </button>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                                        <div>
+                                            <p class="text-sm font-medium">Current version</p>
+                                            <p class="text-xs text-base-content/60">Modified 2 minutes ago</p>
+                                        </div>
+                                        <span class="badge badge-primary badge-sm">Current</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 border border-base-300 rounded-lg hover:bg-base-50 transition-colors cursor-pointer">
+                                        <div>
+                                            <p class="text-sm font-medium">Original draft</p>
+                                            <p class="text-xs text-base-content/60">Created 1 hour ago</p>
+                                        </div>
+                                        <button class="btn btn-ghost btn-xs">Restore</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="action-bar-wrapper fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 shadow-lg z-40">
+                <div class="flex items-center justify-between px-8 py-4">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-base-content/70">Last saved: 2 minutes ago</span>
+                        <div class="loading loading-spinner loading-xs hidden" id="save-indicator"></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="btn btn-ghost" onclick="navigateTo(&#39;schedule_overview_page&#39;)">
+                            Cancel
+                        </button>
+                        <button class="btn btn-error btn-outline" onclick="handleDeletePost()">
+                            <span class="iconify" data-icon="heroicons:trash" data-width="16"></span>
+                            Delete Post
+                        </button>
+                        <button class="btn btn-primary" onclick="handleSaveChanges()" id="save-btn">
+                            <span class="iconify" data-icon="heroicons:check" data-width="16"></span>
+                            Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-wrapper">
+        <div data-section-id="common_footer" data-section-type="common_footer">
+<footer class="footer footer-center p-8 bg-base-200 text-base-content border-t border-base-300">
+<div class="grid grid-flow-col gap-6">
+<a class="link link-hover focus-primary">About</a>
+<a class="link link-hover focus-primary">Help Center</a>
+<a class="link link-hover focus-primary">Contact</a>
+<a class="link link-hover focus-primary">Privacy Policy</a>
+<a class="link link-hover focus-primary">Terms of Service</a>
+</div>
+<div class="grid grid-flow-col gap-4">
+<a class="link link-hover focus-primary" aria-label="Twitter">
+<span class="iconify" data-icon="simple-icons:twitter" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Facebook">
+<span class="iconify" data-icon="simple-icons:facebook" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="Instagram">
+<span class="iconify" data-icon="simple-icons:instagram" data-width="20"></span>
+</a>
+<a class="link link-hover focus-primary" aria-label="LinkedIn">
+<span class="iconify" data-icon="simple-icons:linkedin" data-width="20"></span>
+</a>
+</div>
+<div class="text-center">
+<p>© 2024 Social Hub. All rights reserved.</p>
+<p class="text-sm opacity-70 mt-1">Streamline your social media management</p>
+</div>
+</footer>
+</div>
+    </div>
+
+    <script>
+(function() {
+&#39;use strict&#39;;
+
+// Initialize global namespace
+window.APP_GLOBALS = window.APP_GLOBALS || {};
+
+// Global navigation utility
+window.navigateTo = function(targetPageId) {
+const isInIframe = window.self !== window.top;
+const targetFileName = `${targetPageId}.html`;
+
+if (isInIframe) {
+window.parent.postMessage({
+type: &#39;iframeNavigation&#39;,
+targetPageId: targetPageId
+}, &#39;*&#39;);
+} else {
+window.location.href = targetFileName;
+}
+};
+
+// Sidebar collapse/expand utility
+window.toggleSidebar = function() {
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (!sidebar) return;
+
+const isCollapsed = sidebar.classList.contains(&#39;sidebar-collapsed&#39;);
+
+if (isCollapsed) {
+sidebar.classList.remove(&#39;sidebar-collapsed&#39;);
+sidebar.classList.add(&#39;sidebar-expanded&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;expanded&#39;);
+} else {
+sidebar.classList.remove(&#39;sidebar-expanded&#39;);
+sidebar.classList.add(&#39;sidebar-collapsed&#39;);
+localStorage.setItem(&#39;sidebarState&#39;, &#39;collapsed&#39;);
+}
+};
+
+// Initialize sidebar state from localStorage
+window.initSidebarState = function() {
+const savedState = localStorage.getItem(&#39;sidebarState&#39;) || &#39;expanded&#39;;
+const sidebar = document.querySelector(&#39;[data-section-id="common_sidebar"]&#39;);
+if (sidebar) {
+sidebar.classList.add(savedState === &#39;collapsed&#39; ? &#39;sidebar-collapsed&#39; : &#39;sidebar-expanded&#39;);
+}
+};
+
+// Notification utilities
+window.showNotification = function(message, type = &#39;info&#39;) {
+const notification = document.createElement(&#39;div&#39;);
+notification.className = `alert alert-${type} fixed top-4 right-4 w-96 z-50 shadow-lg`;
+notification.innerHTML = `
+<div class="flex items-center gap-2">
+<span class="iconify" data-icon="heroicons:information-circle-solid" data-width="20"></span>
+<span>${message}</span>
+</div>
+`;
+
+document.body.appendChild(notification);
+
+setTimeout(() => {
+if (notification.parentNode) {
+notification.remove();
+}
+}, 5000);
+};
+
+// Initialize components when DOM is loaded
+document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+initSidebarState();
+});
+
+})();
+</script>
+    <script>
+document.addEventListener(&#39;DOMContentLoaded&#39;, function() {
+    // Initialize breadcrumbs
+    updateBreadcrumbs({
+        &#39;category&#39;: &#39;Schedule&#39;,
+        &#39;categoryPageId&#39;: &#39;schedule_overview_page&#39;,
+        &#39;current&#39;: &#39;Edit Post&#39;,
+        &#39;icon&#39;: &#39;heroicons:pencil-square&#39;
+    });
+
+    // Set active sidebar item
+    setActiveSidebarItem(&#39;edit_scheduled_post_page&#39;);
+
+    // Character counter functionality
+    const postContent = document.getElementById(&#39;post-content&#39;);
+    const characterCounter = document.getElementById(&#39;character-counter&#39;);
+    const platformToggles = document.querySelectorAll(&#39;.platform-toggle input[type="checkbox"]&#39;);
+
+    function updateCharacterCount() {
+        const content = postContent.value;
+        const selectedPlatforms = Array.from(platformToggles)
+            .filter(toggle => toggle.checked)
+            .map(toggle => toggle.closest(&#39;.platform-toggle&#39;).dataset.platform);
+
+        let maxLength = 280; // Default Twitter limit
+        if (selectedPlatforms.includes(&#39;facebook&#39;)) maxLength = 63206;
+        if (selectedPlatforms.includes(&#39;instagram&#39;)) maxLength = 2200;
+        if (selectedPlatforms.includes(&#39;linkedin&#39;)) maxLength = 3000;
+
+        const remaining = maxLength - content.length;
+        characterCounter.textContent = `${remaining} characters remaining`;
+
+        // Update styling based on remaining characters
+        characterCounter.classList.remove(&#39;warning&#39;, &#39;error&#39;);
+        if (remaining < 50 &amp;&amp; remaining > 0) {
+            characterCounter.classList.add(&#39;warning&#39;);
+        } else if (remaining < 0) {
+            characterCounter.classList.add(&#39;error&#39;);
+        }
+    }
+
+    // Add event listeners
+    postContent.addEventListener(&#39;input&#39;, updateCharacterCount);
+    platformToggles.forEach(toggle => {
+        toggle.addEventListener(&#39;change&#39;, updateCharacterCount);
+    });
+
+    // Initialize character count
+    updateCharacterCount();
+
+    // Auto-save functionality
+    let saveTimeout;
+    function autoSave() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            const saveIndicator = document.getElementById(&#39;save-indicator&#39;);
+            saveIndicator.classList.remove(&#39;hidden&#39;);
+            
+            // Simulate save operation
+            setTimeout(() => {
+                saveIndicator.classList.add(&#39;hidden&#39;);
+                showNotification(&#39;Draft saved automatically&#39;, &#39;success&#39;);
+            }, 1000);
+        }, 2000);
+    }
+
+    postContent.addEventListener(&#39;input&#39;, autoSave);
+
+    // AI suggestion handlers
+    const aiButtons = document.querySelectorAll(&#39;.btn-ghost&#39;);
+    aiButtons.forEach(button => {
+        if (button.textContent.includes(&#39;Optimize&#39;) || 
+            button.textContent.includes(&#39;Generate&#39;) || 
+            button.textContent.includes(&#39;Improve&#39;)) {
+            button.addEventListener(&#39;click&#39;, function() {
+                const loadingSpinner = document.createElement(&#39;span&#39;);
+                loadingSpinner.className = &#39;loading loading-spinner loading-xs&#39;;
+                this.appendChild(loadingSpinner);
+                
+                setTimeout(() => {
+                    loadingSpinner.remove();
+                    showNotification(&#39;AI suggestion applied&#39;, &#39;success&#39;);
+                }, 1500);
+            });
+        }
+    });
+});
+
+// Save changes handler
+function handleSaveChanges() {
+    const saveBtn = document.getElementById(&#39;save-btn&#39;);
+    const originalText = saveBtn.innerHTML;
+    
+    // Show loading state
+    saveBtn.innerHTML = &#39;<span class="loading loading-spinner loading-xs"></span> Saving...&#39;;
+    saveBtn.disabled = true;
+    
+    // Simulate save operation
+    setTimeout(() => {
+        saveBtn.classList.add(&#39;save-success&#39;);
+        saveBtn.innerHTML = &#39;<span class="iconify" data-icon="heroicons:check" data-width="16"></span> Saved!&#39;;
+        
+        setTimeout(() => {
+            showNotification(&#39;Post updated successfully&#39;, &#39;success&#39;);
+            navigateTo(&#39;schedule_overview_page&#39;);
+        }, 500);
+    }, 1500);
+}
+
+// Delete post handler
+function handleDeletePost() {
+    if (confirm(&#39;Are you sure you want to delete this scheduled post? This action cannot be undone.&#39;)) {
+        showNotification(&#39;Post deleted successfully&#39;, &#39;success&#39;);
+        setTimeout(() => {
+            navigateTo(&#39;schedule_overview_page&#39;);
+        }, 1000);
+    }
+}
+
+// Platform preview functionality
+function showPlatformPreview(platform) {
+    const content = document.getElementById(&#39;post-content&#39;).value;
+    // This would show a modal or inline preview of how the post looks on the selected platform
+    console.log(`Showing ${platform} preview for: ${content}`);
+}
+
+// Version history functionality
+function restoreVersion(versionId) {
+    if (confirm(&#39;Are you sure you want to restore this version? Current changes will be lost.&#39;)) {
+        showNotification(&#39;Version restored successfully&#39;, &#39;success&#39;);
+        // Restore the content from the selected version
+    }
+}
+</script>
+
+<script>
+    setTimeout(() => {
+      Holder.run({
+        domain: "placehold.co"
+      })
+    }, 100)
+  </script></body></html>'></iframe>
+                    </div>
+                  </div>
+
+                </body>
+                </html>
+            
