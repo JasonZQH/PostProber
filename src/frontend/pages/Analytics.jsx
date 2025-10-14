@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import analyticsService from '../services/analyticsService'
+import platformService from '../services/platformService'
 
 function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d')
-  const [selectedPlatform, setSelectedPlatform] = useState('twitter')
+  const [selectedPlatform, setSelectedPlatform] = useState('')
   const [aiInsights, setAiInsights] = useState(null)
   const [isLoadingInsights, setIsLoadingInsights] = useState(false)
   const [showAiInsights, setShowAiInsights] = useState(false)
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
 
   const periods = [
     { value: '24h', label: '24 Hours' },
@@ -15,12 +18,37 @@ function Analytics() {
     { value: '90d', label: '90 Days' }
   ]
 
-  const platforms = [
-    { value: 'all', label: 'All Platforms', icon: '📊' },
-    { value: 'twitter', label: 'Twitter', icon: '🐦' },
-    { value: 'linkedin', label: 'LinkedIn', icon: '💼' },
-    { value: 'instagram', label: 'Instagram', icon: '📷' },
-    { value: 'facebook', label: 'Facebook', icon: '📘' }
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    // Set default platform to first connected platform
+    if (platforms.length > 0 && !selectedPlatform) {
+      setSelectedPlatform(platforms[0].id)
+    }
+
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+      // If current selected platform is disconnected, switch to first available
+      if (platforms.length > 0 && !platforms.some(p => p.id === selectedPlatform)) {
+        setSelectedPlatform(platforms[0].id)
+      } else if (platforms.length === 0) {
+        setSelectedPlatform('')
+      }
+    })
+
+    return unsubscribe
+  }, [])
+
+  // Build platform selector options from connected platforms
+  const platformOptions = [
+    ...(connectedPlatforms.length > 1 ? [{ value: 'all', label: 'All Platforms', icon: '📊' }] : []),
+    ...connectedPlatforms.map(platform => ({
+      value: platform.id,
+      label: platform.name,
+      icon: platform.icon
+    }))
   ]
 
   const overviewStats = [
@@ -115,38 +143,23 @@ function Analytics() {
     }
   ]
 
-  const platformStats = [
-    {
-      platform: 'Twitter',
-      icon: '🐦',
-      followers: '12.4K',
-      posts: 45,
-      engagement: '8.2%',
-      reach: '156K',
-      growth: '+12%',
-      color: '#1DA1F2'
-    },
-    {
-      platform: 'LinkedIn',
-      icon: '💼',
-      followers: '8.9K',
-      posts: 23,
-      engagement: '9.1%',
-      reach: '89K',
-      growth: '+18%',
-      color: '#0077B5'
-    },
-    {
-      platform: 'Instagram',
-      icon: '📷',
-      followers: '5.2K',
-      posts: 31,
-      engagement: '7.8%',
-      reach: '67K',
-      growth: '+8%',
-      color: '#E4405F'
+  // Build platform stats from connected platforms (with demo data for now)
+  const platformStats = connectedPlatforms.map((platform, idx) => {
+    const demoData = [
+      { followers: '12.4K', posts: 45, engagement: '8.2%', reach: '156K', growth: '+12%' },
+      { followers: '8.9K', posts: 23, engagement: '9.1%', reach: '89K', growth: '+18%' },
+      { followers: '5.2K', posts: 31, engagement: '7.8%', reach: '67K', growth: '+8%' },
+      { followers: '3.1K', posts: 18, engagement: '6.5%', reach: '42K', growth: '+15%' }
+    ]
+    const data = demoData[idx % demoData.length]
+
+    return {
+      platform: platform.name,
+      icon: platform.icon,
+      ...data,
+      color: platform.color
     }
-  ]
+  })
 
   const getPerformanceColor = (performance) => {
     switch (performance) {
@@ -200,6 +213,40 @@ function Analytics() {
     }
   }
 
+  // Check if no platforms connected
+  if (connectedPlatforms.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="fade-in">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+            Analytics Dashboard 📊
+          </h1>
+          <p style={{ color: 'var(--gray-600)' }}>
+            Track your social media performance and growth metrics
+          </p>
+        </div>
+
+        <div className="card">
+          <div className="card-content">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📊</div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+                No Analytics Data Available
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--gray-600)' }}>
+                Connect your social media platforms to start tracking your performance
+              </p>
+              <Link to="/settings" className="btn btn-primary">
+                <span>🔗</span>
+                <span>Connect Platforms</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -241,7 +288,7 @@ function Analytics() {
                 onChange={(e) => setSelectedPlatform(e.target.value)}
                 className="form-input w-auto"
               >
-                {platforms.map(platform => (
+                {platformOptions.map(platform => (
                   <option key={platform.value} value={platform.value}>
                     {platform.icon} {platform.label}
                   </option>
@@ -573,63 +620,65 @@ function Analytics() {
           </div>
 
           {/* Platform Performance - aligned with Top Performing Posts */}
-          <div className="card slide-up">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold" style={{ color: 'var(--gray-900)' }}>
-                Platform Performance
-              </h3>
-            </div>
-            <div className="card-content">
-              <div className="space-y-4">
-                {platformStats.map((platform) => (
-                  <div key={platform.platform} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg"
-                        style={{ background: platform.color }}
-                      >
-                        {platform.icon}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
-                          {platform.platform}
+          {platformStats.length > 0 && (
+            <div className="card slide-up">
+              <div className="card-header">
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--gray-900)' }}>
+                  Platform Performance
+                </h3>
+              </div>
+              <div className="card-content">
+                <div className="space-y-4">
+                  {platformStats.map((platform) => (
+                    <div key={platform.platform} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
+                          style={{ background: platform.color }}
+                        >
+                          {platform.icon && <platform.icon size={20} />}
                         </div>
-                        <div className="text-sm" style={{ color: 'var(--gray-600)' }}>
-                          {platform.followers} followers
+                        <div className="flex-1">
+                          <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
+                            {platform.platform}
+                          </div>
+                          <div className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                            {platform.followers} followers
+                          </div>
+                        </div>
+                        <span
+                          className="px-2 py-1 rounded-full text-xs font-medium text-green-700"
+                          style={{ background: 'rgba(0, 210, 91, 0.1)' }}
+                        >
+                          {platform.growth}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-center text-sm">
+                        <div>
+                          <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
+                            {platform.posts}
+                          </div>
+                          <div style={{ color: 'var(--gray-600)' }}>Posts</div>
+                        </div>
+                        <div>
+                          <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
+                            {platform.engagement}
+                          </div>
+                          <div style={{ color: 'var(--gray-600)' }}>Engagement</div>
+                        </div>
+                        <div>
+                          <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
+                            {platform.reach}
+                          </div>
+                          <div style={{ color: 'var(--gray-600)' }}>Reach</div>
                         </div>
                       </div>
-                      <span
-                        className="px-2 py-1 rounded-full text-xs font-medium text-green-700"
-                        style={{ background: 'rgba(0, 210, 91, 0.1)' }}
-                      >
-                        {platform.growth}
-                      </span>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 text-center text-sm">
-                      <div>
-                        <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
-                          {platform.posts}
-                        </div>
-                        <div style={{ color: 'var(--gray-600)' }}>Posts</div>
-                      </div>
-                      <div>
-                        <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
-                          {platform.engagement}
-                        </div>
-                        <div style={{ color: 'var(--gray-600)' }}>Engagement</div>
-                      </div>
-                      <div>
-                        <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
-                          {platform.reach}
-                        </div>
-                        <div style={{ color: 'var(--gray-600)' }}>Reach</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import aiService from '../services/aiService'
+import platformService from '../services/platformService'
 
 function Compose() {
   const [postContent, setPostContent] = useState('')
@@ -10,13 +12,43 @@ function Compose() {
   const [isAIOptimizing, setIsAIOptimizing] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState(null)
   const [aiError, setAiError] = useState(null)
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
 
-  const platforms = [
-    { id: 'twitter', name: 'Twitter', icon: '🐦', limit: 280, connected: true },
-    { id: 'linkedin', name: 'LinkedIn', icon: '💼', limit: 3000, connected: true },
-    { id: 'instagram', name: 'Instagram', icon: '📷', limit: 2200, connected: false },
-    { id: 'facebook', name: 'Facebook', icon: '📘', limit: 63206, connected: false }
-  ]
+  // Platform character limits
+  const platformLimits = {
+    twitter: 280,
+    linkedin: 3000,
+    instagram: 2200,
+    facebook: 63206
+  }
+
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+    })
+
+    return unsubscribe
+  }, [])
+
+  // Create platforms array with connection status
+  const platforms = ['twitter', 'linkedin', 'instagram', 'facebook'].map(id => {
+    const isConnected = connectedPlatforms.some(p => p.id === id)
+    const connectedPlatform = connectedPlatforms.find(p => p.id === id)
+
+    return {
+      id,
+      name: platformService.getPlatformName(id),
+      icon: platformService.getPlatformIcon(id),
+      color: platformService.getPlatformColor(id),
+      limit: platformLimits[id],
+      connected: isConnected,
+      connectedPlatform
+    }
+  })
 
   const handlePlatformToggle = (platformId) => {
     setSelectedPlatforms(prev =>
@@ -123,7 +155,12 @@ function Compose() {
                 value={postContent}
                 onChange={(e) => setPostContent(e.target.value)}
                 placeholder="What's on your mind? Share your thoughts with the world..."
-                className="form-input resize-none"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 resize-none transition-all"
+                style={{
+                  minHeight: '150px',
+                  fontSize: '16px',
+                  lineHeight: '1.5'
+                }}
                 rows="6"
               />
 
@@ -141,8 +178,13 @@ function Compose() {
 
                     return (
                       <div key={platformId} className="flex items-center gap-3">
-                        <span className="text-lg">{platform.icon}</span>
-                        <span className="text-sm font-medium w-20">{platform.name}</span>
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white"
+                          style={{ background: platform.color }}
+                        >
+                          {platform.icon && <platform.icon size={16} />}
+                        </div>
+                        <span className="text-sm font-medium w-24">{platform.name}</span>
                         <div className="flex-1">
                           <div className="progress-bar">
                             <div
@@ -177,25 +219,41 @@ function Compose() {
             </div>
             <div className="card-content">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {platforms.map(platform => (
-                  <div
-                    key={platform.id}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      !platform.connected ? 'opacity-50 cursor-not-allowed' : ''
-                    } ${
-                      selectedPlatforms.includes(platform.id) && platform.connected
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => platform.connected && handlePlatformToggle(platform.id)}
-                  >
-                    <div className="text-center">
-                      <div className="text-3xl mb-2">{platform.icon}</div>
-                      <div className="font-medium text-sm" style={{ color: 'var(--gray-800)' }}>
-                        {platform.name}
-                      </div>
-                      {platform.connected ? (
-                        selectedPlatforms.includes(platform.id) ? (
+                {connectedPlatforms.length === 0 ? (
+                  <div className="col-span-full text-center py-8">
+                    <div className="text-4xl mb-3">🔗</div>
+                    <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--gray-900)' }}>
+                      No Platforms Connected
+                    </h3>
+                    <p className="mb-4" style={{ color: 'var(--gray-600)' }}>
+                      Connect your social media platforms to start posting
+                    </p>
+                    <Link to="/settings" className="btn btn-primary">
+                      Connect Platforms
+                    </Link>
+                  </div>
+                ) : (
+                  platforms.filter(p => p.connected).map(platform => (
+                    <div
+                      key={platform.id}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        selectedPlatforms.includes(platform.id)
+                          ? 'border-blue-400 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handlePlatformToggle(platform.id)}
+                    >
+                      <div className="text-center">
+                        <div
+                          className="w-12 h-12 mx-auto mb-2 rounded-lg flex items-center justify-center text-white"
+                          style={{ background: platform.color }}
+                        >
+                          {platform.icon && <platform.icon size={24} />}
+                        </div>
+                        <div className="font-medium text-sm" style={{ color: 'var(--gray-800)' }}>
+                          {platform.name}
+                        </div>
+                        {selectedPlatforms.includes(platform.id) ? (
                           <div className="mt-2">
                             <span className="status-indicator status-success">✓ Selected</span>
                           </div>
@@ -203,15 +261,11 @@ function Compose() {
                           <div className="text-xs mt-1" style={{ color: 'var(--gray-500)' }}>
                             Click to select
                           </div>
-                        )
-                      ) : (
-                        <div className="mt-2">
-                          <span className="status-indicator status-warning">Not Connected</span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

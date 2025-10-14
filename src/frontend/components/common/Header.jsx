@@ -1,14 +1,38 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import healthWebSocket from '../../services/healthWebSocket'
+import platformService from '../../services/platformService'
 
 function Header() {
   const [alerts, setAlerts] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
+
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+    })
+
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
+    // Only connect to WebSocket if there are connected platforms
+    if (connectedPlatforms.length === 0) {
+      // Disconnect if previously connected
+      healthWebSocket.disconnect()
+      setAlerts([])
+      setUnreadCount(0)
+      setIsConnected(false)
+      return
+    }
+
     // Connect to WebSocket
     healthWebSocket.connect()
 
@@ -33,15 +57,14 @@ function Header() {
       setUnreadCount(healthWebSocket.getUnreadAlertCount(30))
     })
 
-    // Cleanup on unmount
+    // Cleanup on unmount or when platforms change
     return () => {
       unsubConnection()
       unsubDisconnect()
       unsubAlert()
       unsubHistory()
-      healthWebSocket.disconnect()
     }
-  }, [])
+  }, [connectedPlatforms])
 
   const handleNotificationClick = () => {
     setShowNotifications(!showNotifications)
@@ -87,8 +110,8 @@ function Header() {
           <span className="iconify" data-icon="heroicons:bars-3" data-width="24"></span>
         </button>
         <div className="flex items-center ml-4">
-          <img alt="Social Media Manager Logo" className="w-10 h-10 rounded-lg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%233B82F6'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-family='sans-serif' font-size='16' font-weight='bold'%3ESM%3C/text%3E%3C/svg%3E" />
-          <span className="ml-3 text-xl font-semibold text-primary hidden lg:block">Social Hub</span>
+          <img alt="PostProber Logo" className="w-10 h-10 rounded-lg" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%233B82F6'/%3E%3Ctext x='20' y='26' text-anchor='middle' fill='white' font-family='sans-serif' font-size='16' font-weight='bold'%3EPP%3C/text%3E%3C/svg%3E" />
+          <span className="ml-3 text-xl font-semibold text-primary hidden lg:block">PostProber</span>
         </div>
       </div>
 
@@ -146,7 +169,13 @@ function Header() {
                   </div>
                 </div>
 
-                {alerts.length === 0 ? (
+                {connectedPlatforms.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <span className="iconify" data-icon="heroicons:bell-slash" data-width="48"></span>
+                    <p className="mt-2 text-sm">No platforms connected</p>
+                    <p className="text-xs mt-1">Connect platforms to receive health alerts</p>
+                  </div>
+                ) : alerts.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <span className="iconify" data-icon="heroicons:check-circle" data-width="48" style={{ color: 'var(--accent-green)' }}></span>
                     <p className="mt-2">All systems healthy!</p>
@@ -182,7 +211,7 @@ function Header() {
                   </div>
                 )}
 
-                {alerts.length > 0 && (
+                {connectedPlatforms.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-base-300">
                     <Link
                       to="/health"

@@ -4,35 +4,55 @@
  * Manages platform connections and OAuth flows
  */
 
+import { BsTwitterX } from 'react-icons/bs'
+import { FaLinkedin, FaInstagram, FaFacebookF } from 'react-icons/fa'
+
 class PlatformService {
   constructor() {
-    this.connectedPlatforms = this.loadConnectedPlatforms()
+    this.connectedPlatforms = []
     this.listeners = []
+    this.apiBaseUrl = 'http://localhost:8000'
+    this.isInitialized = false
+
+    // Load platforms from backend on initialization
+    this.loadPlatformsFromBackend()
   }
 
   /**
-   * Load connected platforms from localStorage
+   * Load connected platforms from backend API
    */
-  loadConnectedPlatforms() {
+  async loadPlatformsFromBackend() {
     try {
-      const stored = localStorage.getItem('connectedPlatforms')
-      return stored ? JSON.parse(stored) : []
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/status`, {
+        credentials: 'include' // Include cookies for session
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        this.connectedPlatforms = data.connected_platforms.map(platform => ({
+          id: platform.id,
+          name: this.getPlatformName(platform.id),
+          icon: this.getPlatformIcon(platform.id),
+          color: this.getPlatformColor(platform.id),
+          connectedAt: platform.connected_at,
+          status: 'connected',
+          username: platform.username,
+          userId: platform.user_id
+        }))
+        this.isInitialized = true
+        this.notifyListeners()
+      }
     } catch (error) {
-      console.error('Failed to load connected platforms:', error)
-      return []
+      console.error('Failed to load platforms from backend:', error)
+      this.isInitialized = true
     }
   }
 
   /**
-   * Save connected platforms to localStorage
+   * Refresh platform status from backend
    */
-  saveConnectedPlatforms() {
-    try {
-      localStorage.setItem('connectedPlatforms', JSON.stringify(this.connectedPlatforms))
-      this.notifyListeners()
-    } catch (error) {
-      console.error('Failed to save connected platforms:', error)
-    }
+  async refreshPlatforms() {
+    await this.loadPlatformsFromBackend()
   }
 
   /**
@@ -50,51 +70,44 @@ class PlatformService {
   }
 
   /**
-   * Connect a platform (simulated OAuth flow)
+   * Connect a platform (initiates OAuth flow)
    */
-  async connectPlatform(platformId, credentials = {}) {
-    return new Promise((resolve, reject) => {
-      // Simulate OAuth flow delay
-      setTimeout(() => {
-        const platform = {
-          id: platformId.toLowerCase(),
-          name: this.getPlatformName(platformId),
-          icon: this.getPlatformIcon(platformId),
-          color: this.getPlatformColor(platformId),
-          connectedAt: new Date().toISOString(),
-          status: 'connected',
-          // Simulated OAuth tokens
-          accessToken: `mock_token_${platformId}_${Date.now()}`,
-          refreshToken: `mock_refresh_${platformId}_${Date.now()}`,
-          expiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour
-          username: credentials.username || `user@${platformId}`,
-          userId: `user_${Date.now()}`
-        }
-
-        // Check if already connected
-        const existingIndex = this.connectedPlatforms.findIndex(p => p.id === platform.id)
-        if (existingIndex >= 0) {
-          // Update existing connection
-          this.connectedPlatforms[existingIndex] = platform
-        } else {
-          // Add new connection
-          this.connectedPlatforms.push(platform)
-        }
-
-        this.saveConnectedPlatforms()
-        resolve(platform)
-      }, 1500) // Simulate network delay
-    })
+  async connectPlatform(platformId) {
+    try {
+      // Redirect to OAuth login endpoint
+      const loginUrl = `${this.apiBaseUrl}/api/auth/${platformId.toLowerCase()}/login`
+      window.location.href = loginUrl
+    } catch (error) {
+      console.error(`Failed to connect ${platformId}:`, error)
+      throw error
+    }
   }
 
   /**
    * Disconnect a platform
    */
-  disconnectPlatform(platformId) {
-    this.connectedPlatforms = this.connectedPlatforms.filter(
-      p => p.id !== platformId.toLowerCase()
-    )
-    this.saveConnectedPlatforms()
+  async disconnectPlatform(platformId) {
+    try {
+      const response = await fetch(`${this.apiBaseUrl}/api/auth/${platformId.toLowerCase()}/disconnect`, {
+        method: 'POST',
+        credentials: 'include' // Include cookies for session
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to disconnect ${platformId}`)
+      }
+
+      // Remove from local state
+      this.connectedPlatforms = this.connectedPlatforms.filter(
+        p => p.id !== platformId.toLowerCase()
+      )
+      this.notifyListeners()
+
+      return true
+    } catch (error) {
+      console.error(`Failed to disconnect ${platformId}:`, error)
+      throw error
+    }
   }
 
   /**
@@ -128,7 +141,7 @@ class PlatformService {
    */
   getPlatformName(platformId) {
     const names = {
-      twitter: 'Twitter',
+      twitter: 'X (Twitter)',
       linkedin: 'LinkedIn',
       instagram: 'Instagram',
       facebook: 'Facebook'
@@ -137,16 +150,16 @@ class PlatformService {
   }
 
   /**
-   * Helper: Get platform icon
+   * Helper: Get platform icon (React component)
    */
   getPlatformIcon(platformId) {
     const icons = {
-      twitter: '🐦',
-      linkedin: '💼',
-      instagram: '📷',
-      facebook: '📘'
+      twitter: BsTwitterX,
+      linkedin: FaLinkedin,
+      instagram: FaInstagram,
+      facebook: FaFacebookF
     }
-    return icons[platformId.toLowerCase()] || '📱'
+    return icons[platformId.toLowerCase()] || null
   }
 
   /**

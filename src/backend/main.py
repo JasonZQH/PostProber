@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.endpoints import content  # AI content endpoints
 from api.endpoints import health as health_monitoring  # AI health monitoring
 from api.endpoints import analytics  # AI analytics & trending
+from api.endpoints import auth  # OAuth authentication
 from jobs.health_scheduler import start_health_monitoring, stop_health_monitoring
 import logging
 
@@ -34,10 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers - Only AI features (no auth/database)
+# Include routers
 app.include_router(content.router, tags=["AI content"])  # AI content optimization & hashtags
 app.include_router(health_monitoring.router, tags=["AI health monitoring"])  # AI health monitoring & alerts
 app.include_router(analytics.router, tags=["AI analytics & trending"])  # AI analytics & trending analysis
+app.include_router(auth.router, tags=["OAuth authentication"])  # OAuth authentication for platforms
 
 
 # Startup event - Start health monitoring
@@ -109,7 +111,13 @@ async def root():
             "content": "/api/optimize-with-hashtags",
             "health": "/api/health/status",
             "analytics": "/api/analytics/dashboard/{platform}",
-            "trending": "/api/trending/analyze"
+            "trending": "/api/trending/analyze",
+            "auth": {
+                "status": "/api/auth/status",
+                "login": "/api/auth/{platform}/login",
+                "callback": "/api/auth/{platform}/callback",
+                "disconnect": "/api/auth/{platform}/disconnect"
+            }
         }
     }
 

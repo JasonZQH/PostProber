@@ -1,6 +1,21 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import platformService from '../services/platformService'
 
 function Dashboard() {
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
+
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+    })
+
+    return unsubscribe
+  }, [])
   const stats = [
     {
       label: 'Total Posts',
@@ -100,12 +115,84 @@ function Dashboard() {
 
   const getPlatformColor = (platform) => {
     switch (platform.toLowerCase()) {
-      case 'twitter': return 'var(--primary-blue)'
+      case 'twitter': return '#000000'
+      case 'x (twitter)': return '#000000'
       case 'linkedin': return '#0077B5'
       case 'instagram': return '#E4405F'
       case 'facebook': return '#1877F2'
       default: return 'var(--gray-500)'
     }
+  }
+
+  // Check if no platforms connected
+  if (connectedPlatforms.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="fade-in">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+            Welcome to PostProber! 👋
+          </h1>
+          <p style={{ color: 'var(--gray-600)' }}>
+            Get started by connecting your social media accounts
+          </p>
+        </div>
+
+        <div className="card">
+          <div className="card-content">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🚀</div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+                Let's Get Started!
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--gray-600)' }}>
+                Connect your social media platforms to start managing your content, scheduling posts, and tracking analytics
+              </p>
+              <Link to="/settings" className="btn btn-primary">
+                <span>🔗</span>
+                <span>Connect Your First Platform</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Feature highlights for new users */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="card">
+            <div className="card-content text-center">
+              <div className="text-4xl mb-3">✍️</div>
+              <h3 className="font-semibold mb-2" style={{ color: 'var(--gray-900)' }}>
+                Create & Schedule
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                Compose posts and schedule them across all your platforms
+              </p>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-content text-center">
+              <div className="text-4xl mb-3">📊</div>
+              <h3 className="font-semibold mb-2" style={{ color: 'var(--gray-900)' }}>
+                Track Analytics
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                Monitor performance and get AI-powered insights
+              </p>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-content text-center">
+              <div className="text-4xl mb-3">🩺</div>
+              <h3 className="font-semibold mb-2" style={{ color: 'var(--gray-900)' }}>
+                Health Monitoring
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                Stay informed about platform status and rate limits
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -217,7 +304,7 @@ function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-6">
-          {/* All Systems Online */}
+          {/* Connected Platforms Status */}
           <div
             className="card slide-up"
             style={{ background: 'var(--gradient-primary)', color: 'white' }}
@@ -225,14 +312,14 @@ function Dashboard() {
             <div className="card-content">
               <div className="text-center">
                 <div className="text-3xl mb-3">🚀</div>
-                <h3 className="font-semibold mb-2">All Systems Online</h3>
+                <h3 className="font-semibold mb-2">{connectedPlatforms.length} Platform{connectedPlatforms.length !== 1 ? 's' : ''} Connected</h3>
                 <p className="text-sm opacity-90 mb-4">
-                  All your connected accounts are working perfectly
+                  {connectedPlatforms.map(p => p.name).join(', ')}
                 </p>
                 <div className="flex justify-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  {connectedPlatforms.map((platform, idx) => (
+                    <div key={platform.id} className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -247,22 +334,22 @@ function Dashboard() {
             </div>
             <div className="card-content">
               <div className="space-y-3">
-                <button className="w-full btn btn-primary justify-start">
+                <Link to="/compose" className="w-full btn btn-primary justify-start">
                   <span>✍️</span>
                   <span>Create New Post</span>
-                </button>
-                <button className="w-full btn btn-outline justify-start">
+                </Link>
+                <Link to="/schedule" className="w-full btn btn-outline justify-start">
                   <span>📅</span>
                   <span>Schedule Post</span>
-                </button>
-                <button className="w-full btn btn-outline justify-start">
+                </Link>
+                <Link to="/analytics" className="w-full btn btn-outline justify-start">
                   <span>📊</span>
                   <span>View Analytics</span>
-                </button>
-                <button className="w-full btn btn-outline justify-start">
+                </Link>
+                <Link to="/settings" className="w-full btn btn-outline justify-start">
                   <span>🔗</span>
-                  <span>Add Account</span>
-                </button>
+                  <span>Manage Accounts</span>
+                </Link>
               </div>
             </div>
           </div>

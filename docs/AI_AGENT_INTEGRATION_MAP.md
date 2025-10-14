@@ -650,6 +650,7 @@ All AI agents return structured responses:
 
 - **AI Learning Examples:** `src/shared/ai-examples/` (01-06)
 - **Frontend Components:** `src/frontend/pages/`
+- **OAuth Integration Guide:** `docs/OAUTH_INTEGRATION_GUIDE.md` ⭐ **NEW**
 - **API Documentation:** (To be created)
 - **LangChain Docs:** https://python.langchain.com/
 - **LangGraph Docs:** https://langchain-ai.github.io/langgraph/

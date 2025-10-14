@@ -1,6 +1,22 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import platformService from '../services/platformService'
 
 function Schedule() {
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
+
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+    })
+
+    return unsubscribe
+  }, [])
+
   const scheduledPosts = [
     {
       id: 1,
@@ -31,6 +47,40 @@ function Schedule() {
       date: date.toLocaleDateString(),
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
+  }
+
+  // Check if no platforms connected
+  if (connectedPlatforms.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="fade-in">
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+            Scheduled Posts 📅
+          </h1>
+          <p style={{ color: 'var(--gray-600)' }}>
+            Manage your upcoming posts and publishing schedule
+          </p>
+        </div>
+
+        <div className="card">
+          <div className="card-content">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">📅</div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+                No Schedule Available
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--gray-600)' }}>
+                Connect your social media platforms to start scheduling posts
+              </p>
+              <Link to="/settings" className="btn btn-primary">
+                <span>🔗</span>
+                <span>Connect Platforms</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -118,15 +168,30 @@ function Schedule() {
             <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
               Upcoming Posts
             </h2>
-            <button className="btn btn-primary">
+            <Link to="/compose" className="btn btn-primary">
               <span>✍️</span>
               <span>Schedule New Post</span>
-            </button>
+            </Link>
           </div>
         </div>
         <div className="card-content">
-          <div className="space-y-4">
-            {scheduledPosts.map((post, index) => {
+          {scheduledPosts.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">📝</div>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--gray-900)' }}>
+                No Scheduled Posts
+              </h3>
+              <p className="mb-4" style={{ color: 'var(--gray-600)' }}>
+                Start scheduling your content to maintain a consistent posting schedule
+              </p>
+              <Link to="/compose" className="btn btn-primary">
+                <span>✍️</span>
+                <span>Create Your First Post</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {scheduledPosts.map((post, index) => {
               const { date, time } = formatDateTime(post.scheduledFor)
 
               return (
@@ -186,8 +251,9 @@ function Schedule() {
                   </div>
                 </div>
               )
-            })}
-          </div>
+              })}
+            </div>
+          )}
         </div>
       </div>
 

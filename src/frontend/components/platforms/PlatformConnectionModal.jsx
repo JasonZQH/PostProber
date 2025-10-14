@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import platformService from '../../services/platformService'
+import { BsTwitterX } from 'react-icons/bs'
+import { FaLinkedin, FaInstagram, FaFacebookF } from 'react-icons/fa'
 
 function PlatformConnectionModal({ isOpen, onClose, onComplete }) {
   const [selectedPlatform, setSelectedPlatform] = useState(null)
@@ -8,10 +10,10 @@ function PlatformConnectionModal({ isOpen, onClose, onComplete }) {
   const [error, setError] = useState(null)
 
   const platforms = [
-    { id: 'twitter', name: 'Twitter', icon: '🐦', color: '#1DA1F2', description: 'Connect to post tweets and monitor engagement' },
-    { id: 'linkedin', name: 'LinkedIn', icon: '💼', color: '#0077B5', description: 'Share professional content and insights' },
-    { id: 'instagram', name: 'Instagram', icon: '📷', color: '#E4405F', description: 'Post photos, stories, and reels' },
-    { id: 'facebook', name: 'Facebook', icon: '📘', color: '#1877F2', description: 'Manage your Facebook page posts' }
+    { id: 'twitter', name: 'X (Twitter)', icon: BsTwitterX, color: '#000000', description: 'Connect to post and monitor engagement' },
+    { id: 'linkedin', name: 'LinkedIn', icon: FaLinkedin, color: '#0077B5', description: 'Share professional content and insights' },
+    { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: '#E4405F', description: 'Post photos, stories, and reels' },
+    { id: 'facebook', name: 'Facebook', icon: FaFacebookF, color: '#1877F2', description: 'Manage your Facebook page posts' }
   ]
 
   const handleConnectPlatform = async (platform) => {
@@ -20,17 +22,18 @@ function PlatformConnectionModal({ isOpen, onClose, onComplete }) {
     setError(null)
 
     try {
-      // Simulate OAuth flow
-      await platformService.connectPlatform(platform.id, {
-        username: `demo_user@${platform.id}`
-      })
+      // Store onboarding state before redirect
+      localStorage.setItem('onboardingInProgress', 'true')
 
-      setConnectedPlatforms(prev => [...prev, platform.id])
-      setSelectedPlatform(null)
+      // Initiate OAuth flow (will redirect to platform)
+      await platformService.connectPlatform(platform.id)
+
+      // Note: User will be redirected to OAuth provider,
+      // then back to /accounts page after authentication
     } catch (err) {
       setError(`Failed to connect ${platform.name}. Please try again.`)
-    } finally {
       setIsConnecting(false)
+      setSelectedPlatform(null)
     }
   }
 
@@ -82,10 +85,10 @@ function PlatformConnectionModal({ isOpen, onClose, onComplete }) {
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl text-white"
+                      className="w-14 h-14 rounded-xl flex items-center justify-center text-white"
                       style={{ background: platform.color }}
                     >
-                      {platform.icon}
+                      <platform.icon size={28} />
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold mb-1" style={{ color: 'var(--gray-900)' }}>

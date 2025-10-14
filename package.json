@@ -9,23 +9,30 @@
     "test": "tests"
   },
   "scripts": {
-      "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-      "dev:backend": "cd src/backend && python -m uvicorn main:app --reload --port 8000",
-      "dev:frontend": "vite",
-      "build": "vite build",
-      "preview": "vite preview",
-      "start:backend": "cd src/backend && python -m uvicorn main:app --port 8000",
-      "install:python": "pip install -r requirements.txt",
-      "init:db": "cd src/backend && python init_db.py",
-      "test": "cd src/backend && python -m pytest tests/",
-      "lint": "eslint src/frontend/",
-      "typecheck": "tsc --noEmit"
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd src/backend && python -m uvicorn main:app --reload --port 8000",
+    "dev:frontend": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start:backend": "cd src/backend && python -m uvicorn main:app --port 8000",
+    "install:python": "pip install -r requirements.txt",
+    "init:db": "cd src/backend && python init_db.py",
+    "test": "cd src/backend && python -m pytest tests/",
+    "lint": "eslint src/frontend/",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/JasonZQH/PostProber.git"
   },
-  "keywords": ["prober", "sre", "devops", "social-media", "monitoring", "ai-agent"],
+  "keywords": [
+    "prober",
+    "sre",
+    "devops",
+    "social-media",
+    "monitoring",
+    "ai-agent"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -43,6 +50,7 @@
     "puppeteer": "^24.23.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.3",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",

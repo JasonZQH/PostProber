@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import healthWebSocket from '../services/healthWebSocket'
 import platformService from '../services/platformService'
+import { BsTwitterX } from 'react-icons/bs'
+import { FaLinkedin, FaInstagram, FaFacebookF } from 'react-icons/fa'
 
 function Health() {
   const [platformHealth, setPlatformHealth] = useState([])
@@ -14,17 +16,17 @@ function Health() {
   // Helper functions
   const getPlatformIcon = (platform) => {
     const icons = {
-      twitter: '🐦',
-      linkedin: '💼',
-      instagram: '📷',
-      facebook: '📘'
+      twitter: BsTwitterX,
+      linkedin: FaLinkedin,
+      instagram: FaInstagram,
+      facebook: FaFacebookF
     }
-    return icons[platform.toLowerCase()] || '📱'
+    return icons[platform.toLowerCase()] || null
   }
 
   const getPlatformColor = (platform) => {
     const colors = {
-      twitter: '#1DA1F2',
+      twitter: '#000000',
       linkedin: '#0077B5',
       instagram: '#E4405F',
       facebook: '#1877F2'
@@ -88,19 +90,22 @@ function Health() {
           connectedPlatformIds.includes(platform.platform.toLowerCase())
         )
 
-        const transformedData = filteredData.map(platform => ({
-          platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
-          icon: getPlatformIcon(platform.platform),
-          status: platform.status,
-          responseTime: `${platform.response_time}ms`,
-          rateLimit: {
-            used: platform.rate_limit_used,
-            limit: platform.rate_limit_total,
-            percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
-          },
-          lastCheck: formatTimestamp(platform.last_check),
-          color: getPlatformColor(platform.platform)
-        }))
+        const transformedData = filteredData.map(platform => {
+          const IconComponent = getPlatformIcon(platform.platform)
+          return {
+            platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
+            icon: IconComponent,
+            status: platform.status,
+            responseTime: `${platform.response_time}ms`,
+            rateLimit: {
+              used: platform.rate_limit_used,
+              limit: platform.rate_limit_total,
+              percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
+            },
+            lastCheck: formatTimestamp(platform.last_check),
+            color: getPlatformColor(platform.platform)
+          }
+        })
 
         setPlatformHealth(transformedData)
         setLastUpdate(new Date())
@@ -149,19 +154,22 @@ function Health() {
         connectedPlatformIds.includes(p.platform.toLowerCase())
       )
 
-      const transformedData = filteredPlatforms.map(platform => ({
-        platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
-        icon: getPlatformIcon(platform.platform),
-        status: platform.status,
-        responseTime: `${platform.response_time}ms`,
-        rateLimit: {
-          used: platform.rate_limit_used,
-          limit: platform.rate_limit_total,
-          percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
-        },
-        lastCheck: formatTimestamp(platform.last_check),
-        color: getPlatformColor(platform.platform)
-      }))
+      const transformedData = filteredPlatforms.map(platform => {
+        const IconComponent = getPlatformIcon(platform.platform)
+        return {
+          platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
+          icon: IconComponent,
+          status: platform.status,
+          responseTime: `${platform.response_time}ms`,
+          rateLimit: {
+            used: platform.rate_limit_used,
+            limit: platform.rate_limit_total,
+            percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
+          },
+          lastCheck: formatTimestamp(platform.last_check),
+          color: getPlatformColor(platform.platform)
+        }
+      })
 
       setPlatformHealth(transformedData)
       setLastUpdate(new Date())
@@ -325,10 +333,10 @@ function Health() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg"
+                            className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
                             style={{ background: platform.color }}
                           >
-                            {platform.icon}
+                            {platform.icon && <platform.icon size={20} />}
                           </div>
                           <div>
                             <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
