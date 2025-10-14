@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import aiService from '../services/aiService'
 
 function Compose() {
   const [postContent, setPostContent] = useState('')
@@ -8,6 +9,7 @@ function Compose() {
   const [scheduleTime, setScheduleTime] = useState('')
   const [isAIOptimizing, setIsAIOptimizing] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState(null)
+  const [aiError, setAiError] = useState(null)
 
   const platforms = [
     { id: 'twitter', name: 'Twitter', icon: '🐦', limit: 280, connected: true },
@@ -24,17 +26,42 @@ function Compose() {
     )
   }
 
-  const handleAIOptimize = () => {
+  const handleAIOptimize = async () => {
+    // Clear previous errors
+    setAiError(null)
     setIsAIOptimizing(true)
-    setTimeout(() => {
-      setAiSuggestions({
-        optimizedContent: postContent + " 🚀\n\n#AI #SocialMedia #Innovation",
-        hashtags: ['#AI', '#SocialMedia', '#Innovation', '#TechTrends'],
-        bestTimes: ['2:00 PM', '4:00 PM', '6:00 PM'],
-        score: 92
-      })
+
+    try {
+      // Get the first selected platform (or default to twitter)
+      const targetPlatform = selectedPlatforms.length > 0
+        ? selectedPlatforms[0]
+        : 'twitter'
+
+      // Call AI service to optimize content AND generate hashtags
+      const response = await aiService.optimizeWithHashtags(postContent, targetPlatform)
+
+      if (response.success) {
+        const { optimization, hashtags } = response.result
+
+        // Format AI suggestions for the UI
+        setAiSuggestions({
+          optimizedContent: optimization.optimized_content,
+          score: optimization.score,
+          improvements: optimization.improvements,
+          hashtags: hashtags.hashtags.map(h => h.tag),
+          hashtagsWithMeta: hashtags.hashtags, // Keep full metadata
+          processingTime: response.processing_time
+        })
+      } else {
+        throw new Error('AI optimization failed')
+      }
+
+    } catch (error) {
+      console.error('AI optimization error:', error)
+      setAiError(error.message || 'Failed to optimize content. Please try again.')
+    } finally {
       setIsAIOptimizing(false)
-    }, 2000)
+    }
   }
 
   const getCharacterCount = (platformId) => {
@@ -245,6 +272,35 @@ function Compose() {
               )}
             </div>
           </div>
+
+          {/* AI Error Display */}
+          {aiError && (
+            <div
+              className="card slide-up"
+              style={{ borderColor: 'var(--danger-red)', background: 'rgba(255, 0, 0, 0.05)' }}
+            >
+              <div className="card-content">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <div>
+                    <h4 className="font-semibold mb-1" style={{ color: 'var(--danger-red)' }}>
+                      AI Optimization Failed
+                    </h4>
+                    <p className="text-sm" style={{ color: 'var(--gray-700)' }}>
+                      {aiError}
+                    </p>
+                    <button
+                      onClick={() => setAiError(null)}
+                      className="btn btn-sm btn-outline mt-2"
+                      style={{ borderColor: 'var(--danger-red)', color: 'var(--danger-red)' }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* AI Suggestions */}
           {aiSuggestions && (

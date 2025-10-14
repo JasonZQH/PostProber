@@ -1,0 +1,578 @@
+import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import healthWebSocket from '../services/healthWebSocket'
+import platformService from '../services/platformService'
+
+function Health() {
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24h')
+  const [platformHealth, setPlatformHealth] = useState([])
+  const [activeAlerts, setActiveAlerts] = useState([])
+  const [isConnected, setIsConnected] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdate, setLastUpdate] = useState(null)
+  const [connectedPlatforms, setConnectedPlatforms] = useState([])
+
+  const timeRanges = [
+    { value: '1h', label: '1 Hour' },
+    { value: '24h', label: '24 Hours' },
+    { value: '7d', label: '7 Days' },
+    { value: '30d', label: '30 Days' }
+  ]
+
+  // Fetch initial health data
+  const fetchHealthData = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/health/status')
+      const data = await response.json()
+
+      if (data.success) {
+        // Transform API data to UI format
+        const transformedData = data.platforms.map(platform => ({
+          platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
+          icon: getPlatformIcon(platform.platform),
+          status: platform.status,
+          uptime: '99.8%', // This would come from historical data
+          responseTime: `${platform.response_time}ms`,
+          apiCalls: 0, // This would come from usage tracking
+          rateLimit: {
+            used: platform.rate_limit_used,
+            limit: platform.rate_limit_total,
+            percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
+          },
+          lastCheck: formatTimestamp(platform.last_check),
+          color: getPlatformColor(platform.platform),
+          analysis: platform.analysis
+        }))
+
+        setPlatformHealth(transformedData)
+        setLastUpdate(new Date())
+      }
+    } catch (error) {
+      console.error('Failed to fetch health data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Connect to WebSocket and subscribe to updates
+  useEffect(() => {
+    // Fetch initial data
+    fetchHealthData()
+
+    // Connect to WebSocket
+    healthWebSocket.connect()
+
+    // Subscribe to connection events
+    const unsubConnection = healthWebSocket.on('connection', () => {
+      setIsConnected(true)
+    })
+
+    const unsubDisconnect = healthWebSocket.on('disconnect', () => {
+      setIsConnected(false)
+    })
+
+    // Subscribe to health updates
+    const unsubUpdate = healthWebSocket.on('health_update', (platforms) => {
+      const transformedData = platforms.map(platform => ({
+        platform: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
+        icon: getPlatformIcon(platform.platform),
+        status: platform.status,
+        uptime: '99.8%',
+        responseTime: `${platform.response_time}ms`,
+        apiCalls: 0,
+        rateLimit: {
+          used: platform.rate_limit_used,
+          limit: platform.rate_limit_total,
+          percentage: (platform.rate_limit_used / platform.rate_limit_total) * 100
+        },
+        lastCheck: formatTimestamp(platform.last_check),
+        color: getPlatformColor(platform.platform),
+        analysis: platform.analysis
+      }))
+
+      setPlatformHealth(transformedData)
+      setLastUpdate(new Date())
+    })
+
+    // Subscribe to health alerts
+    const unsubAlert = healthWebSocket.on('health_alert', (alert) => {
+      setActiveAlerts(prev => {
+        // Add new alert at the beginning
+        const newAlerts = [{
+          id: Date.now(),
+          type: alert.severity,
+          platform: alert.platform.charAt(0).toUpperCase() + alert.platform.slice(1),
+          message: alert.message,
+          time: formatTimestamp(alert.timestamp),
+          acknowledged: false
+        }, ...prev]
+
+        // Keep only last 10 alerts
+        return newAlerts.slice(0, 10)
+      })
+    })
+
+    // Subscribe to alert history
+    const unsubHistory = healthWebSocket.on('history', (history) => {
+      const transformedAlerts = history.map(alert => ({
+        id: Date.now() + Math.random(),
+        type: alert.severity,
+        platform: alert.platform.charAt(0).toUpperCase() + alert.platform.slice(1),
+        message: alert.message,
+        time: formatTimestamp(alert.timestamp),
+        acknowledged: false
+      }))
+
+      setActiveAlerts(transformedAlerts.slice(0, 10))
+    })
+
+    // Cleanup on unmount
+    return () => {
+      unsubConnection()
+      unsubDisconnect()
+      unsubUpdate()
+      unsubAlert()
+      unsubHistory()
+    }
+  }, [])
+
+  // Helper functions
+  const getPlatformIcon = (platform) => {
+    const icons = {
+      twitter: '🐦',
+      linkedin: '💼',
+      instagram: '📷',
+      facebook: '📘'
+    }
+    return icons[platform] || '📱'
+  }
+
+  const getPlatformColor = (platform) => {
+    const colors = {
+      twitter: '#1DA1F2',
+      linkedin: '#0077B5',
+      instagram: '#E4405F',
+      facebook: '#1877F2'
+    }
+    return colors[platform] || '#6B7280'
+  }
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffMinutes = Math.floor((now - date) / 60000)
+
+    if (diffMinutes < 1) return 'Just now'
+    if (diffMinutes < 60) return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} ${Math.floor(diffMinutes / 60) === 1 ? 'hour' : 'hours'} ago`
+    return date.toLocaleDateString()
+  }
+
+  const handleRefresh = async () => {
+    await fetchHealthData()
+  }
+
+  // Load connected platforms
+  useEffect(() => {
+    const platforms = platformService.getConnectedPlatforms()
+    setConnectedPlatforms(platforms)
+
+    // Subscribe to platform changes
+    const unsubscribe = platformService.subscribe((platforms) => {
+      setConnectedPlatforms(platforms)
+    })
+
+    return unsubscribe
+  }, [])
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'healthy': return 'var(--accent-green)'
+      case 'warning': return 'var(--warning-orange)'
+      case 'critical': return 'var(--danger-red)'
+      default: return 'var(--gray-500)'
+    }
+  }
+
+  const getStatusBadge = (status) => {
+    const colors = {
+      healthy: { bg: 'rgba(0, 210, 91, 0.1)', text: 'var(--accent-green)', icon: '✅' },
+      warning: { bg: 'rgba(255, 140, 0, 0.1)', text: 'var(--warning-orange)', icon: '⚠️' },
+      critical: { bg: 'rgba(239, 68, 68, 0.1)', text: 'var(--danger-red)', icon: '🚨' },
+      'at-risk': { bg: 'rgba(255, 140, 0, 0.1)', text: 'var(--warning-orange)', icon: '⚠️' }
+    }
+
+    const color = colors[status] || colors.healthy
+
+    return (
+      <span
+        className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+        style={{ background: color.bg, color: color.text }}
+      >
+        <span>{color.icon}</span>
+        <span className="capitalize">{status.replace('-', ' ')}</span>
+      </span>
+    )
+  }
+
+  const getRateLimitColor = (percentage) => {
+    if (percentage >= 90) return 'var(--danger-red)'
+    if (percentage >= 75) return 'var(--warning-orange)'
+    return 'var(--accent-green)'
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="fade-in">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+          Health Check Dashboard 🩺
+        </h1>
+        <p style={{ color: 'var(--gray-600)' }}>
+          Monitor system health, platform connectivity, and reliability metrics
+        </p>
+      </div>
+
+      {/* Time Range Filter */}
+      <div className="card slide-up">
+        <div className="card-content">
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium" style={{ color: 'var(--gray-700)' }}>
+              Time Range:
+            </label>
+            <select
+              value={selectedTimeRange}
+              onChange={(e) => setSelectedTimeRange(e.target.value)}
+              className="form-input w-auto"
+            >
+              {timeRanges.map(range => (
+                <option key={range.value} value={range.value}>
+                  {range.label}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center gap-3 ml-auto">
+              {/* Connection Status */}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+                <span className="text-xs text-gray-500">
+                  {isConnected ? 'Live Updates' : 'Disconnected'}
+                </span>
+              </div>
+
+              {/* Last Update Time */}
+              {lastUpdate && (
+                <span className="text-xs text-gray-500">
+                  Updated: {lastUpdate.toLocaleTimeString()}
+                </span>
+              )}
+
+              {/* Refresh Button */}
+              <button
+                className="btn btn-outline"
+                onClick={handleRefresh}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="spinner"></div>
+                    <span>Refreshing...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🔄</span>
+                    <span>Refresh</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Check for connected platforms */}
+      {connectedPlatforms.length === 0 ? (
+        <div className="card">
+          <div className="card-content">
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🔗</div>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--gray-900)' }}>
+                No Platforms Connected
+              </h2>
+              <p className="mb-6" style={{ color: 'var(--gray-600)' }}>
+                Connect your social media platforms to monitor their health and performance
+              </p>
+              <Link to="/settings" className="btn btn-primary">
+                <span>Connect Platforms</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Active Alerts */}
+          <div className="card slide-up">
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--gray-900)' }}>
+                  Active Alerts
+                </h3>
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                  {activeAlerts.filter(alert => !alert.acknowledged).length}
+                </span>
+              </div>
+            </div>
+            <div className="card-content">
+              {activeAlerts.length === 0 ? (
+                <div className="text-center py-8" style={{ color: 'var(--gray-600)' }}>
+                  <div className="text-4xl mb-2">✅</div>
+                  <p>All systems healthy</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activeAlerts.map((alert) => (
+              <div key={metric.label} className="card slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="card-content">
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-xl"
+                      style={{ background: metric.color }}
+                    >
+                      {metric.icon}
+                    </div>
+                    {getStatusBadge(metric.status)}
+                  </div>
+                  <div className="text-2xl font-bold mb-1" style={{ color: 'var(--gray-900)' }}>
+                    {metric.value}
+                  </div>
+                  <div className="text-sm mb-2" style={{ color: 'var(--gray-600)' }}>
+                    {metric.label}
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span style={{ color: 'var(--gray-500)' }}>Target: {metric.target}</span>
+                    <span style={{ color: metric.trend.startsWith('+') ? 'var(--danger-red)' : 'var(--accent-green)' }}>
+                      {metric.trend}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* SLO Tracking - Fills remaining space */}
+          <div className="card slide-up flex-1 flex flex-col">
+            <div className="card-header">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--gray-900)' }}>
+                SLO Tracking
+              </h3>
+            </div>
+            <div className="card-content flex-1 flex items-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                {sloTracking.map((slo) => (
+                  <div key={slo.name} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-sm font-medium" style={{ color: 'var(--gray-800)' }}>
+                        {slo.name}
+                      </div>
+                      {getStatusBadge(slo.status)}
+                    </div>
+                    <div className="text-sm space-y-2" style={{ color: 'var(--gray-600)' }}>
+                      <div className="flex justify-between">
+                        <span>Current:</span>
+                        <span className="font-medium">{slo.current}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Target:</span>
+                        <span className="font-medium">{slo.target}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Error Budget:</span>
+                        <span className="font-medium">{slo.errorBudget}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Active Alerts - Right side */}
+        <div className="lg:col-span-1">
+          <div className="card slide-up">
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--gray-900)' }}>
+                  Active Alerts
+                </h3>
+                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                  {activeAlerts.filter(alert => !alert.acknowledged).length}
+                </span>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="space-y-3">
+                {activeAlerts.map((alert) => (
+                  <div key={alert.id} className={`p-3 border rounded-lg ${alert.acknowledged ? 'opacity-50' : ''}`} style={{ borderColor: 'var(--gray-200)' }}>
+                    <div className="flex items-start justify-between mb-2">
+                      {getStatusBadge(alert.type)}
+                      <span className="text-xs" style={{ color: 'var(--gray-500)' }}>{alert.time}</span>
+                    </div>
+                    <div className="text-sm font-medium mb-1" style={{ color: 'var(--gray-800)' }}>
+                      {alert.platform}
+                    </div>
+                    <div className="text-xs" style={{ color: 'var(--gray-600)' }}>
+                      {alert.message}
+                    </div>
+                    {!alert.acknowledged && (
+                      <button className="mt-2 text-xs text-blue-600 hover:text-blue-800">
+                        Acknowledge
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Platform Health Status */}
+      <div className="card slide-up">
+        <div className="card-header">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
+            Platform Health Status
+          </h2>
+        </div>
+        <div className="card-content">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="spinner mx-auto mb-4"></div>
+              <p style={{ color: 'var(--gray-600)' }}>Loading health data...</p>
+            </div>
+          ) : platformHealth.length === 0 ? (
+            <div className="text-center py-12">
+              <span className="iconify" data-icon="heroicons:exclamation-triangle" data-width="48" style={{ color: 'var(--warning-orange)' }}></span>
+              <p className="mt-4" style={{ color: 'var(--gray-600)' }}>No health data available</p>
+              <button onClick={handleRefresh} className="btn btn-primary mt-4">
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {platformHealth.map((platform) => (
+              <div key={platform.platform} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg"
+                      style={{ background: platform.color }}
+                    >
+                      {platform.icon}
+                    </div>
+                    <div>
+                      <div className="font-medium" style={{ color: 'var(--gray-800)' }}>
+                        {platform.platform}
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--gray-500)' }}>
+                        Last check: {platform.lastCheck}
+                      </div>
+                    </div>
+                  </div>
+                  {getStatusBadge(platform.status)}
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--gray-600)' }}>Uptime:</span>
+                    <span className="font-medium" style={{ color: 'var(--gray-800)' }}>{platform.uptime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--gray-600)' }}>Response Time:</span>
+                    <span className="font-medium" style={{ color: 'var(--gray-800)' }}>{platform.responseTime}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--gray-600)' }}>API Calls:</span>
+                    <span className="font-medium" style={{ color: 'var(--gray-800)' }}>{platform.apiCalls}</span>
+                  </div>
+
+                  {/* Rate Limit Bar */}
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span style={{ color: 'var(--gray-600)' }}>Rate Limit</span>
+                      <span style={{ color: getRateLimitColor(platform.rateLimit.percentage) }}>
+                        {platform.rateLimit.used}/{platform.rateLimit.limit} ({platform.rateLimit.percentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: `${platform.rateLimit.percentage}%`,
+                          background: getRateLimitColor(platform.rateLimit.percentage)
+                        }}
+                      ></div>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Incident Management */}
+      <div className="card slide-up">
+        <div className="card-header">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
+              Incident Management
+            </h2>
+            <button className="btn btn-outline btn-sm">View All Incidents</button>
+          </div>
+        </div>
+        <div className="card-content">
+          <div className="space-y-4">
+            {recentIncidents.map((incident) => (
+              <div key={incident.id} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="font-medium mb-1" style={{ color: 'var(--gray-800)' }}>
+                      {incident.title}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--gray-600)' }}>
+                      <span>Started: {incident.startTime}</span>
+                      {incident.duration && <span>Duration: {incident.duration}</span>}
+                      <span>Affected Posts: {incident.affectedPosts}</span>
+                      <span>Retries: {incident.retryCount}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(incident.severity)}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        incident.status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {incident.status}
+                    </span>
+                  </div>
+                </div>
+                {incident.status === 'investigating' && (
+                  <div className="flex gap-2">
+                    <button className="btn btn-sm btn-outline">Retry Failed Posts</button>
+                    <button className="btn btn-sm btn-outline">Manual Rollback</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Health

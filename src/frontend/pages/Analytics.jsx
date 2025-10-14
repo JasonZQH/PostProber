@@ -1,8 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import analyticsService from '../services/analyticsService'
 
 function Analytics() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d')
-  const [selectedPlatform, setSelectedPlatform] = useState('all')
+  const [selectedPlatform, setSelectedPlatform] = useState('twitter')
+  const [aiInsights, setAiInsights] = useState(null)
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false)
+  const [showAiInsights, setShowAiInsights] = useState(false)
 
   const periods = [
     { value: '24h', label: '24 Hours' },
@@ -174,6 +178,28 @@ function Analytics() {
     )
   }
 
+  // Load AI insights
+  const loadAIInsights = async () => {
+    if (selectedPlatform === 'all') {
+      alert('Please select a specific platform to get AI insights')
+      return
+    }
+
+    setIsLoadingInsights(true)
+    try {
+      const dashboard = await analyticsService.getAnalyticsDashboard(selectedPlatform)
+      if (dashboard.success) {
+        setAiInsights(dashboard.result)
+        setShowAiInsights(true)
+      }
+    } catch (error) {
+      console.error('Failed to load AI insights:', error)
+      alert('Failed to load AI insights. Make sure the backend is running.')
+    } finally {
+      setIsLoadingInsights(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -222,13 +248,227 @@ function Analytics() {
                 ))}
               </select>
             </div>
-            <button className="btn btn-outline ml-auto">
+            <button
+              onClick={loadAIInsights}
+              disabled={isLoadingInsights || selectedPlatform === 'all'}
+              className="btn btn-primary"
+              style={{ background: 'var(--accent-green)', borderColor: 'var(--accent-green)' }}
+            >
+              {isLoadingInsights ? (
+                <>
+                  <div className="spinner"></div>
+                  <span>Loading AI Insights...</span>
+                </>
+              ) : (
+                <>
+                  <span>🤖</span>
+                  <span>Get AI Insights</span>
+                </>
+              )}
+            </button>
+            <button className="btn btn-outline">
               <span>📤</span>
               <span>Export Report</span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* AI Insights Section */}
+      {showAiInsights && aiInsights && (
+        <div className="space-y-6 slide-up">
+          {/* Trending Insights */}
+          <div className="card" style={{ borderColor: 'var(--accent-green)', borderWidth: '2px' }}>
+            <div className="card-header">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔥</span>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
+                    Trending on {selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowAiInsights(false)}
+                  className="btn btn-sm btn-ghost"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="card-content">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Top Formats */}
+                <div>
+                  <h4 className="font-semibold mb-3" style={{ color: 'var(--gray-800)' }}>
+                    📋 Top Formats
+                  </h4>
+                  <div className="space-y-2">
+                    {aiInsights.trending?.top_formats?.slice(0, 5).map((format, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-sm px-2 py-1 rounded-full" style={{ background: 'var(--accent-green)', color: 'white' }}>
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm">{format}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Top Topics */}
+                <div>
+                  <h4 className="font-semibold mb-3" style={{ color: 'var(--gray-800)' }}>
+                    💡 Top Topics
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {aiInsights.trending?.top_topics?.map((topic, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-full text-sm"
+                        style={{ background: 'rgba(0, 210, 91, 0.1)', color: 'var(--accent-green-dark)' }}
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Engagement Drivers */}
+                <div>
+                  <h4 className="font-semibold mb-3" style={{ color: 'var(--gray-800)' }}>
+                    🚀 Engagement Drivers
+                  </h4>
+                  <div className="space-y-2">
+                    {aiInsights.trending?.engagement_drivers?.map((driver, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span style={{ color: 'var(--accent-green)' }}>✓</span>
+                        <span className="text-sm">{driver}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Posting Advice */}
+              {aiInsights.trending?.posting_advice && (
+                <div className="mt-6 p-4 rounded-lg" style={{ background: 'rgba(0, 210, 91, 0.05)' }}>
+                  <h4 className="font-semibold mb-2" style={{ color: 'var(--gray-800)' }}>
+                    💬 AI Recommendation
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--gray-700)' }}>
+                    {aiInsights.trending.posting_advice}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Best Times to Post */}
+          {aiInsights.best_times && (
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⏰</span>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
+                    Best Times to Post
+                  </h2>
+                </div>
+              </div>
+              <div className="card-content">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {aiInsights.best_times.recommendations?.map((rec, idx) => (
+                    <div key={idx} className="p-4 border rounded-lg" style={{ borderColor: 'var(--gray-200)' }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold" style={{ color: 'var(--gray-800)' }}>
+                          📅 {rec.day}
+                        </h4>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium`}
+                          style={{
+                            background: rec.confidence === 'high' ? 'rgba(0, 210, 91, 0.1)' : 'rgba(255, 140, 0, 0.1)',
+                            color: rec.confidence === 'high' ? 'var(--accent-green)' : 'var(--warning-orange)'
+                          }}
+                        >
+                          {rec.confidence} confidence
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {rec.time_slots?.map((slot, sidx) => (
+                          <div key={sidx} className="text-sm px-3 py-2 rounded" style={{ background: 'var(--gray-100)' }}>
+                            🕐 {slot}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs" style={{ color: 'var(--gray-600)' }}>
+                        {rec.reason}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {aiInsights.best_times.general_advice && (
+                  <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--gray-100)' }}>
+                    <p className="text-sm" style={{ color: 'var(--gray-700)' }}>
+                      💡 <strong>Tip:</strong> {aiInsights.best_times.general_advice}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Performance Comparison */}
+          {aiInsights.performance && (
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📊</span>
+                  <h2 className="text-xl font-semibold" style={{ color: 'var(--gray-900)' }}>
+                    Performance Insights
+                  </h2>
+                </div>
+              </div>
+              <div className="card-content">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold mb-1" style={{ color: 'var(--accent-green)' }}>
+                      {aiInsights.performance.overall_score}
+                    </div>
+                    <div className="text-sm" style={{ color: 'var(--gray-600)' }}>Overall Score</div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="space-y-3">
+                      {aiInsights.performance.insights?.map((insight, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span style={{ color: 'var(--accent-green)' }}>•</span>
+                          <span className="text-sm" style={{ color: 'var(--gray-700)' }}>{insight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Plan */}
+                {aiInsights.performance.action_plan && (
+                  <div className="p-4 rounded-lg" style={{ background: 'rgba(0, 210, 91, 0.05)' }}>
+                    <h4 className="font-semibold mb-3" style={{ color: 'var(--gray-800)' }}>
+                      🎯 Action Plan
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {aiInsights.performance.action_plan.map((action, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <span className="text-sm font-bold" style={{ color: 'var(--accent-green)' }}>
+                            {idx + 1}.
+                          </span>
+                          <span className="text-sm" style={{ color: 'var(--gray-700)' }}>{action}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

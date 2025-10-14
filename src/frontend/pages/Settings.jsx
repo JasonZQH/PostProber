@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
+import PlatformManagementCard from '../components/platforms/PlatformManagementCard'
 
 function Settings() {
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('platforms')
 
   const tabs = [
+    { id: 'platforms', label: 'Platforms', icon: '🔗' },
     { id: 'profile', label: 'Profile', icon: '👤' },
     { id: 'ai', label: 'AI Settings', icon: '🤖' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
@@ -45,6 +47,13 @@ function Settings() {
             ))}
           </div>
         </div>
+
+        {/* Platforms Tab */}
+        {activeTab === 'platforms' && (
+          <div className="card-content">
+            <PlatformManagementCard />
+          </div>
+        )}
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
