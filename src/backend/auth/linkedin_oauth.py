@@ -24,15 +24,15 @@ class LinkedInOAuth(OAuthHandler):
 
     @property
     def user_info_url(self) -> str:
-        return 'https://api.linkedin.com/v2/me'
+        return 'https://api.linkedin.com/v2/userinfo'
 
     @property
     def scopes(self) -> list:
         return [
+            'openid',
             'profile',
-            'w_member_social'  # Required for posting
-            # Note: 'openid' and 'email' are only available for certain API products
-            # If using "Share on LinkedIn", only profile + w_member_social are needed
+            'w_member_social'
+            # Add 'email' if your app is approved for email access
         ]
 
     def _get_env_client_id(self) -> str:
@@ -107,7 +107,16 @@ class LinkedInOAuth(OAuthHandler):
         async with aiohttp.ClientSession() as session:
             async with session.get(self.user_info_url, headers=headers) as response:
                 if response.status == 200:
-                    return await response.json()
+                    data = await response.json()
+
+                    # Normalise fields so downstream code can stay consistent
+                    return {
+                        'id': data.get('sub'),
+                        'localizedFirstName': data.get('given_name', ''),
+                        'localizedLastName': data.get('family_name', ''),
+                        'email': data.get('email'),
+                        'raw': data
+                    }
                 else:
                     error_text = await response.text()
                     raise Exception(f"Failed to get user info: {error_text}")
@@ -188,7 +197,8 @@ class LinkedInOAuth(OAuthHandler):
         """
         headers = {
             'Authorization': f'Bearer {access_token}',
-            'X-Restli-Protocol-Version': '2.0.0'
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': 202405
         }
 
         params = {

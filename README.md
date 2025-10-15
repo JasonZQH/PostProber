@@ -1,141 +1,77 @@
-# PostProber - AI Agent Powered Social Media Reliability Monitor
+# PostProber - AI Agent Powered Social Media Co-Pilot
 
-## Project Overview
+PostProber pairs a FastAPI backend with a React (Vite) frontend to deliver AI-assisted social media workflows. The system combines OpenAI-powered content tooling with real-time platform health monitoring, OAuth account linking, and rich documentation aimed at phased delivery.
 
-PostProber is an SRE/DevOps demonstration project that showcases how AI agents can be integrated into reliability monitoring systems. The application monitors social media post delivery across multiple platforms (LinkedIn, Twitter, Instagram) and provides real-time feedback on posting success, visibility, engagement metrics, and potential issues.
+## Core Capabilities
+- **Content Intelligence (Phase 1)** – GPT-backed optimization and hashtag generation exposed through `/api/optimize-content`, `/api/generate-hashtags`, and the combined `/api/optimize-with-hashtags` endpoint.
+- **Health Monitoring (Phase 2)** – Concurrent platform checks, APScheduler driven polling, and WebSocket push alerts keep connected clients up to date.
+- **Analytics & Trending (Phase 3)** – LLM agents surface trending patterns, posting guidance, and performance gap analysis for connected platforms.
+- **OAuth Account Linking** – Twitter, LinkedIn, Instagram, and Facebook handlers manage PKCE + token storage inside the bundled SQLite database.
 
-## Core Features
-
-1. **Multi-Platform Account Management**: Users can connect and manage multiple social media accounts
-2. **Intelligent Post Composition**: Input interface with platform-specific optimization suggestions
-3. **Cross-Platform Posting**: Send posts to selected platforms simultaneously
-4. **Real-Time Monitoring Dashboard**: Step-by-step monitoring of post lifecycle
-5. **AI-Powered Validation**: Intelligent verification of post success and visibility
-6. **Alert System**: Proactive notifications for posting failures or anomalies
-
-## Why This Architecture?
-
-### Technology Stack Rationale
-
-**Frontend: React + Vite**
-- **Why**: Fast development with hot reload, excellent ecosystem for real-time dashboards
-- **Alternative considered**: Vue.js (rejected due to smaller ecosystem for monitoring components)
-- **Benefit**: Rich component libraries for charts, real-time updates, and responsive design
-
-**Backend: Node.js + Express**
-- **Why**: JavaScript everywhere reduces context switching, excellent async handling for social media APIs
-- **Alternative considered**: Python Flask (rejected due to more complex deployment for full-stack)
-- **Benefit**: Fast prototyping, extensive NPM ecosystem for social media integrations
-
-**Database: SQLite (Development) / PostgreSQL (Production)**
-- **Why**: Simple setup for demo, easy migration path to production
-- **Alternative considered**: MongoDB (rejected due to ACID requirements for monitoring data)
-- **Benefit**: Structured data for user accounts, post history, and monitoring logs
-
-**AI Integration: OpenAI API**
-- **Why**: Most mature API for natural language processing and decision making
-- **Alternative considered**: Local LLM (rejected due to infrastructure complexity)
-- **Benefit**: Advanced reasoning for post optimization and anomaly detection
-
-**Real-time Communication: WebSockets (Socket.io)**
-- **Why**: Essential for live monitoring dashboard updates
-- **Alternative considered**: Server-sent events (rejected due to bidirectional needs)
-- **Benefit**: Instant feedback on monitoring progress
-
-**Browser Automation: Puppeteer**
-- **Why**: Reliable automation for platforms without official APIs
-- **Alternative considered**: Selenium (rejected due to heavier resource usage)
-- **Benefit**: Headless Chrome automation for post verification
-
-## System Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   External      │
-│   (React)       │    │   (Node.js)     │    │   Services      │
-├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ • Dashboard     │◄──►│ • API Routes    │◄──►│ • LinkedIn API  │
-│ • Auth UI       │    │ • Auth Service  │    │ • Twitter API   │
-│ • Post Composer │    │ • Post Service  │    │ • Instagram API │
-│ • Monitor View  │    │ • AI Agent      │    │ • OpenAI API    │
-│ • Alerts        │    │ • Scheduler     │    │ • Puppeteer     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                       │                       │
-        └───────────────────────┼───────────────────────┘
-                                │
-                    ┌─────────────────┐
-                    │   Database      │
-                    │   (SQLite)      │
-                    ├─────────────────┤
-                    │ • Users         │
-                    │ • Accounts      │
-                    │ • Posts         │
-                    │ • Monitoring    │
-                    │ • Alerts        │
-                    └─────────────────┘
-```
-
-## Why This Is The Easiest Approach
-
-1. **Single Language**: JavaScript/Node.js reduces complexity and learning curve
-2. **Minimal Infrastructure**: SQLite eliminates database setup complexity
-3. **Rich Ecosystem**: NPM packages available for all social media integrations
-4. **Rapid Prototyping**: Vite + React enables fast UI development
-5. **Docker Ready**: Simple containerization for deployment
-6. **API-First**: Clean separation allows easy testing and scaling
-
-## Development Workflow
-
-1. **Phase 1**: Core infrastructure and basic UI
-2. **Phase 2**: Authentication and account management
-3. **Phase 3**: Social media integrations
-4. **Phase 4**: AI agent implementation
-5. **Phase 5**: Monitoring dashboard and alerts
-
-## Project Structure
-
+## Project Layout
 ```
 PostProber/
+├── docs/                        # Architecture, status, and integration guides
 ├── src/
-│   ├── frontend/          # React application
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Page components
-│   │   ├── hooks/         # Custom React hooks
-│   │   └── utils/         # Frontend utilities
-│   ├── backend/           # Node.js server
-│   │   ├── routes/        # API endpoints
-│   │   ├── controllers/   # Business logic
-│   │   ├── services/      # External integrations
-│   │   ├── models/        # Database models
-│   │   └── middleware/    # Authentication, logging
-│   └── shared/            # Shared types and utilities
-├── config/                # Configuration files
-├── docs/                  # Documentation
-├── tests/                 # Test files
-└── docker/               # Container configurations
+│   ├── backend/                 # FastAPI application (Python)
+│   │   ├── api/endpoints/       # FastAPI routers (content, health, analytics, auth)
+│   │   ├── tools/               # LangChain/OpenAI powered agents
+│   │   ├── jobs/                # APScheduler health monitoring loop
+│   │   ├── services/            # WebSocket connection manager
+│   │   └── database/            # SQLite models + helpers
+│   └── frontend/                # React (Vite) single-page app
+│       ├── pages/               # Compose, Health, Analytics, etc.
+│       ├── services/            # API + WebSocket clients
+│       └── components/          # UI building blocks
+├── package.json                 # Frontend dependencies and scripts
+├── requirements.txt             # Backend Python dependencies
+└── README.md                    # You are here
 ```
 
-## Alternative Architectures Considered
+## Quick Start
 
-### Microservices Approach
-**Rejected**: Too complex for demonstration project, adds operational overhead
+### 1. Backend (FastAPI)
+```bash
+cd src/backend
+python -m venv ../../venv
+source ../../venv/bin/activate        # Windows: ..\..\venv\Scripts\activate
+pip install -r requirements.txt
+# ensure .env in repo root defines OPENAI_API_KEY and OAuth secrets
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-### Python + FastAPI
-**Rejected**: Requires additional frontend framework, slower development cycle
+Key endpoints:
+- Swagger UI: `http://localhost:8000/docs`
+- Health WebSocket: `ws://localhost:8000/ws/health`
 
-### Full Cloud-Native (AWS Lambda + DynamoDB)
-**Rejected**: Higher cost, more complex deployment, harder to run locally
+### 2. Frontend (React + Vite)
+```bash
+cd <repo-root>
+npm install
+npm run dev
+```
 
-### Desktop Application (Electron)
-**Rejected**: Web-based provides better accessibility and sharing capabilities
+The Vite dev server defaults to `http://localhost:5173` and proxies API traffic against the FastAPI server.
 
-## Next Steps
+## Notable Modules
+- `src/backend/tool/*.py` – LangChain agents encapsulating GPT prompts for optimization, hashtags, analytics, and health analysis.
+- `src/backend/jobs/health_scheduler.py` – APScheduler job orchestrating periodic health checks and deduplicated alerts.
+- `src/backend/services/websocket_manager.py` – Connection manager that broadcasts health updates and alert history to clients.
+- `src/frontend/services/aiService.js` – Thin wrapper around the AI endpoints used across the compose experience.
+- `src/frontend/services/healthWebSocket.js` – Reconnect-capable WebSocket client that powers the header notifications and health dashboard.
 
-1. Set up basic project structure with package.json and dependencies
-2. Create minimal backend server with health check endpoint
-3. Set up React frontend with basic routing
-4. Implement database schema and models
-5. Add authentication system
-6. Integrate first social media platform (Twitter/X)
+## Development Notes
+- Environment variables are loaded from the repository root `.env`. Both backend entrypoint and individual tools expect `OPENAI_API_KEY` plus OAuth credentials (Twitter, LinkedIn, Instagram, Facebook).
+- The SQLite database stored at `src/backend/database/postprober.db` manages ephemeral session users and per-platform tokens.
+- WebSocket traffic is only initiated when the frontend detects connected platforms, minimizing idle connections.
 
-This architecture prioritizes rapid development, easy testing, and clear demonstration of AI agent capabilities in an SRE context while maintaining production-ready patterns.
+## Testing & Validation
+- **Backend** – Add FastAPI unit or integration tests under `src/backend/tests` (currently placeholder). Use `pytest` or `httpx.AsyncClient` to validate endpoints when extending functionality.
+- **Frontend** – React components can be tested with the Vite/Jest configuration (`npm test`). Ensure WebSocket flows are mocked when adding new health-monitoring features.
+- **Manual** – Use the Compose page to exercise AI workflows and the Health page/Header bell to confirm alert streaming once OAuth connections are established.
+
+## Additional Documentation
+The `docs/` directory contains phase summaries, architecture diagrams, integration checklists, and status updates to help orient new contributors. Start with:
+- `docs/PROJECT_STATUS_OVERVIEW.md` – Phase completion highlights.
+- `docs/AI_AGENT_SYSTEM_ARCHITECTURE.md` – Deep dive into tool orchestration and data flows.
+- `docs/QUICK_TEST_GUIDE.md` – Manual validation steps per feature area.

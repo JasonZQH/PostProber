@@ -1,299 +1,102 @@
 # System Architecture & Data Flow
 
-## High-Level Architecture
+PostProber couples a FastAPI backend with a React/Vite frontend to orchestrate AI-powered content tooling and platform health monitoring. This document summarises the current architecture (Phases 1–3) and how the moving pieces interact.
 
+## High-Level Diagram
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         PostProber System                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
-│  │  Frontend   │    │   Backend   │    │   External APIs     │  │
-│  │  (React)    │◄──►│  (Node.js)  │◄──►│   & Automation      │  │
-│  └─────────────┘    └─────────────┘    └─────────────────────┘  │
-│         │                   │                       │          │
-│         │                   │                       │          │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐  │
-│  │  WebSocket  │◄──►│  Database   │    │    AI Agent         │  │
-│  │  (Real-time)│    │  (SQLite)   │    │   (OpenAI)          │  │
-│  └─────────────┘    └─────────────┘    └─────────────────────┘  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Component Architecture
-
-### Frontend Components
-```
-src/frontend/
-├── App.jsx                 # Main application component
-├── components/
-│   ├── auth/
-│   │   ├── LoginForm.jsx      # User authentication
-│   │   └── AccountManager.jsx # Social media account linking
-│   ├── composer/
-│   │   ├── PostComposer.jsx   # Post creation interface
-│   │   └── PlatformSelector.jsx # Choose posting platforms
-│   ├── monitoring/
-│   │   ├── Dashboard.jsx      # Real-time monitoring view
-│   │   ├── StepProgress.jsx   # Step-by-step progress
-│   │   └── AlertPanel.jsx     # Error/success notifications
-│   └── common/
-│       ├── Header.jsx         # Navigation
-│       └── Sidebar.jsx        # Menu navigation
-├── hooks/
-│   ├── useAuth.js            # Authentication state
-│   ├── useRealTime.js        # WebSocket connection
-│   └── useMonitoring.js      # Monitoring data
-└── utils/
-    ├── api.js                # API client
-    └── constants.js          # App constants
+┌──────────────────────────────────────────────────────────────────────┐
+│                              Frontend (Vite)                         │
+│  Pages: Dashboard, Compose, Health, Analytics, Accounts              │
+│  Services: aiService, analyticsService, platformService,             │
+│            healthWebSocket                                           │
+└───────────────▲───────────────────────────────┬──────────────────────┘
+                │ REST (JSON)                   │ WebSocket (JSON)
+┌───────────────┴───────────────────────────────▼──────────────────────┐
+│                        Backend (FastAPI + APScheduler)               │
+│  api.endpoints.content    → GPT optimization + hashtags              │
+│  api.endpoints.analytics  → Trending + performance insights          │
+│  api.endpoints.health     → Health checks + WebSocket gateway        │
+│  api.endpoints.auth       → OAuth login/callback/token management    │
+│  jobs.health_scheduler    → Periodic platform health polling         │
+│  services.websocket_mgr   → Connection registry + broadcast helpers  │
+└───────────────┬──────────────────────────────────────────────────────┘
+                │
+┌───────────────▼──────────────────────────────────────────────────────┐
+│                     AI Agents & Data Providers                       │
+│  tools.content_optimizer / hashtag_generator                         │
+│  tools.trending_analyzer / analytics_insights                        │
+│  tools.health_monitor                                                │
+│  SQLite (`database/models.py`) storing sessions + OAuth tokens       │
+│  External APIs: OpenAI, Twitter, LinkedIn, Instagram, Facebook       │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Backend Services
-```
-src/backend/
-├── server.js               # Express server entry point
-├── routes/
-│   ├── auth.js               # Authentication endpoints
-│   ├── posts.js              # Post management
-│   ├── accounts.js           # Social media accounts
-│   └── monitoring.js         # Monitoring data
-├── controllers/
-│   ├── AuthController.js     # Auth business logic
-│   ├── PostController.js     # Post operations
-│   └── MonitorController.js  # Monitoring logic
-├── services/
-│   ├── platforms/
-│   │   ├── TwitterService.js   # Twitter API integration
-│   │   ├── LinkedInService.js  # LinkedIn API integration
-│   │   └── InstagramService.js # Instagram automation
-│   ├── AIAgentService.js       # OpenAI integration
-│   ├── MonitoringService.js    # Monitoring orchestration
-│   └── NotificationService.js  # Alert system
-├── models/
-│   ├── User.js               # User data model
-│   ├── Account.js            # Social media accounts
-│   ├── Post.js               # Post records
-│   └── MonitoringLog.js      # Monitoring history
-└── middleware/
-    ├── auth.js               # JWT authentication
-    ├── validation.js         # Input validation
-    └── logging.js            # Request logging
-```
+## Component Breakdown
 
-## Data Flow Diagrams
+### Backend (FastAPI)
+- **Routers** (`api/endpoints/*.py`)
+  - `content.py` – Exposes optimization + hashtag endpoints invoked by the compose flow.
+  - `analytics.py` – Provides trending analysis, best posting times, content insights, and dashboard aggregates.
+  - `health.py` – Returns current status, triggers manual checks, and upgrades clients to the health WebSocket.
+  - `auth.py` – Handles OAuth flows for Twitter, LinkedIn, Instagram, and Facebook using provider-specific helpers.
+- **Tools (`tools/*.py`)**
+  - Wrap LangChain `ChatOpenAI` calls, enforce JSON outputs, and append metadata used by the UI.
+  - Include fallbacks for JSON parsing errors to avoid blocking user flows.
+- **Scheduler (`jobs/health_scheduler.py`)**
+  - Runs `HealthMonitorTool.check_all_platforms()` every five minutes.
+  - Deduplicates alerts (cooldown logic), maintains last results, and broadcasts over WebSocket.
+- **WebSocket Manager (`services/websocket_manager.py`)**
+  - Tracks active connections, relays alerts/updates, responds to history/stat requests, and issues periodic pings.
+- **Database (`database/models.py`)**
+  - SQLite-based persistence for session IDs, OAuth tokens, and state records used during PKCE exchanges.
 
-### User Authentication Flow
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant B as Backend
-    participant SM as Social Media
+### Frontend (React + Vite)
+- **Pages**
+  - `Compose.jsx` – Authoring surface that calls `aiService.optimizeWithHashtags()` and renders AI suggestions.
+  - `Health.jsx` – Real-time status dashboard driven by REST fetches and WebSocket updates.
+  - `Analytics.jsx` – Surfaces trending analysis, best posting times, and AI insights (Phase 3).
+  - `Accounts.jsx` – Manages OAuth connections via `platformService`.
+  - `Dashboard.jsx` – Entry overview with health summaries and quick metrics.
+- **Services**
+  - `aiService.js` & `analyticsService.js` – REST clients targeting FastAPI endpoints (uses `VITE_API_URL` if defined).
+  - `platformService.js` – Keeps connected platform metadata in sync with `/api/auth/status`.
+  - `healthWebSocket.js` – Handles connection lifecycle, reconnection, ping/pong, and listener management.
+- **Shared UI**
+  - `components/common/Header.jsx` – Notification bell that subscribes to `healthWebSocket` events and shows unread alerts.
 
-    U->>F: Enter credentials
-    F->>B: POST /auth/login
-    B->>SM: OAuth redirect
-    SM->>B: Authorization code
-    B->>SM: Exchange for tokens
-    SM->>B: Access tokens
-    B->>B: Encrypt & store tokens
-    B->>F: JWT session token
-    F->>U: Login success
-```
+## Data Flows
 
-### Post Creation & Monitoring Flow
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant B as Backend
-    participant AI as AI Agent
-    participant SM as Social Media
-    participant WS as WebSocket
+### Content Optimization & Hashtags
+1. User composes text on `/compose`.
+2. `aiService.optimizeWithHashtags` posts `{content, platform}` to `/api/optimize-with-hashtags`.
+3. FastAPI invokes `ContentOptimizerTool.optimize` and `HashtagGeneratorTool.generate`.
+4. Response includes optimized copy, improvement list, score, and hashtag collection for UI rendering.
 
-    U->>F: Create post content
-    F->>B: POST /posts/create
-    B->>AI: Analyze post content
-    AI->>B: Optimization suggestions
-    B->>F: Return suggestions
+### Health Monitoring
+1. APScheduler job runs `HealthMonitorTool.check_all_platforms()` on startup and at five-minute intervals.
+2. Results are stored in `HealthScheduler.last_health_check` and broadcast via `websocket_manager`.
+3. Web clients subscribe to `/ws/health`; header + health page update UI, maintain history, and reflect unread alerts.
+4. Manual checks (`POST /api/health/check`) reuse the same tool and broadcast path.
 
-    U->>F: Confirm posting
-    F->>B: POST /posts/submit
-    B->>SM: Submit to platforms
+### OAuth Linking
+1. User clicks “Connect” in `/accounts`.
+2. `platformService.connectPlatform()` redirects to `/api/auth/{platform}/login`.
+3. `auth.py` creates/updates a session, persists state, and redirects to external provider with PKCE if needed.
+4. Callback exchanges code for tokens, stores them via `Database.save_platform_token`, and redirects back to the app.
+5. Frontend refreshes platform list via `/api/auth/status`.
 
-    loop Monitoring
-        B->>SM: Check post status
-        B->>AI: Analyze results
-        B->>WS: Broadcast updates
-        WS->>F: Real-time updates
-        F->>U: Display progress
-    end
-```
+### Analytics & Trending
+1. Frontend requests `/api/trending/analyze`, `/api/trending/best-times/{platform}`, or `/api/analytics/analyze-content`.
+2. Backend orchestrates `TrendingAnalyzerTool` and `AnalyticsInsightsTool`, returning insights used in dashboards and reports.
 
-### AI Agent Decision Flow
-```mermaid
-flowchart TD
-    A[Post Submitted] --> B[AI Analysis]
-    B --> C{Content Appropriate?}
-    C -->|Yes| D[Optimize for Platforms]
-    C -->|No| E[Flag for Review]
+## Deployment Considerations
+- **Configuration** – All secrets live in the root `.env`. Tools also load this file directly, so keep paths stable.
+- **Scaling** – For higher throughput, move periodic jobs to dedicated workers and promote the SQLite database to PostgreSQL.
+- **Monitoring** – WebSocket manager currently keeps alert history in memory; persist alerts to SQLite if long-term auditability is required.
 
-    D --> F[Post to Platforms]
-    F --> G[Monitor Results]
-    G --> H{Success Criteria Met?}
+## Future Enhancements
+- Persist health alerts and analytics summaries for historical dashboards.
+- Add retry/backoff strategies for OpenAI calls and OAuth token refresh flows.
+- Introduce background queues (e.g., Redis + RQ) if platform polling or analytics workloads expand.
 
-    H -->|Yes| I[Continue Monitoring]
-    H -->|No| J[AI Problem Analysis]
-    J --> K{Retry Possible?}
-    K -->|Yes| L[Implement Fix]
-    K -->|No| M[Alert User]
-
-    I --> N[Generate Report]
-    L --> F
-    M --> O[End Monitoring]
-    E --> O
-    N --> O
-```
-
-## Database Schema
-
-### Core Tables
-```sql
--- Users table
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Social media accounts
-CREATE TABLE accounts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    platform VARCHAR(50) NOT NULL, -- 'twitter', 'linkedin', 'instagram'
-    account_name VARCHAR(255),
-    access_token TEXT, -- encrypted
-    refresh_token TEXT, -- encrypted
-    token_expires_at DATETIME,
-    is_active BOOLEAN DEFAULT true,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Posts
-CREATE TABLE posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    content TEXT NOT NULL,
-    platforms JSON, -- ['twitter', 'linkedin']
-    status VARCHAR(50) DEFAULT 'draft', -- 'draft', 'posting', 'posted', 'failed'
-    ai_suggestions JSON,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    posted_at DATETIME
-);
-
--- Monitoring logs
-CREATE TABLE monitoring_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_id INTEGER REFERENCES posts(id),
-    platform VARCHAR(50),
-    step VARCHAR(100), -- 'authentication', 'posting', 'verification', 'engagement'
-    status VARCHAR(50), -- 'pending', 'success', 'failed', 'warning'
-    details JSON,
-    ai_analysis TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Alerts
-CREATE TABLE alerts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    post_id INTEGER REFERENCES posts(id),
-    type VARCHAR(50), -- 'error', 'warning', 'success'
-    message TEXT,
-    is_read BOOLEAN DEFAULT false,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## API Endpoint Structure
-
-### Authentication Endpoints
-```javascript
-POST   /api/auth/login          # User login
-POST   /api/auth/logout         # User logout
-GET    /api/auth/me             # Get current user
-POST   /api/auth/refresh        # Refresh JWT token
-```
-
-### Account Management
-```javascript
-GET    /api/accounts            # List connected accounts
-POST   /api/accounts/connect    # Connect new social media account
-DELETE /api/accounts/:id        # Disconnect account
-PUT    /api/accounts/:id        # Update account settings
-```
-
-### Post Management
-```javascript
-GET    /api/posts               # List user posts
-POST   /api/posts               # Create new post
-GET    /api/posts/:id           # Get specific post
-PUT    /api/posts/:id           # Update post
-DELETE /api/posts/:id           # Delete post
-POST   /api/posts/:id/submit    # Submit post for publishing
-```
-
-### Monitoring
-```javascript
-GET    /api/monitoring/:postId  # Get monitoring status
-GET    /api/monitoring/:postId/logs # Get detailed logs
-POST   /api/monitoring/:postId/retry # Retry failed operations
-```
-
-### WebSocket Events
-```javascript
-// Client to Server
-'join_monitoring'     # Join monitoring room for specific post
-'leave_monitoring'    # Leave monitoring room
-
-// Server to Client
-'monitoring_update'   # Real-time monitoring updates
-'alert_notification'  # New alert for user
-'post_status_change'  # Post status changed
-```
-
-## Security Architecture
-
-### Authentication & Authorization
-```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Client    │    │   Server    │    │  Database   │
-├─────────────┤    ├─────────────┤    ├─────────────┤
-│ JWT Token   │◄──►│ Verify JWT  │◄──►│ User Data   │
-│ (Headers)   │    │ Middleware  │    │ (Encrypted) │
-└─────────────┘    └─────────────┘    └─────────────┘
-```
-
-### Data Encryption
-- **At Rest**: Social media tokens encrypted with AES-256
-- **In Transit**: HTTPS/WSS for all communications
-- **Secrets**: Environment variables for API keys
-
-## Scalability Considerations
-
-### Current Architecture Limits
-- **Concurrent Users**: ~100 (single server)
-- **Posts per Hour**: ~1000 (API rate limits)
-- **Real-time Connections**: ~500 WebSocket connections
-
-### Scaling Strategy
-1. **Horizontal Scaling**: Load balancer + multiple Node.js instances
-2. **Database**: Migrate SQLite → PostgreSQL with connection pooling
-3. **Caching**: Redis for session storage and API rate limit tracking
-4. **Queue System**: Bull/BullMQ for background job processing
-
-This architecture balances simplicity for demonstration with production-ready patterns that can scale as needed.
+This architecture emphasises modular AI tooling, clean API boundaries, and real-time feedback loops, making it straightforward to evolve PostProber’s agent capabilities over time.

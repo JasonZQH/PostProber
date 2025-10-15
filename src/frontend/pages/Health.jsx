@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import healthWebSocket from '../services/healthWebSocket'
 import platformService from '../services/platformService'
@@ -12,6 +12,10 @@ function Health() {
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [connectedPlatforms, setConnectedPlatforms] = useState([])
+  const connectedPlatformIds = useMemo(
+    () => new Set(connectedPlatforms.map(platform => platform.id.toLowerCase())),
+    [connectedPlatforms]
+  )
 
   // Helper functions
   const getPlatformIcon = (platform) => {
@@ -85,9 +89,8 @@ function Health() {
 
       if (data.success) {
         // Filter to only show connected platforms
-        const connectedPlatformIds = connectedPlatforms.map(p => p.id)
         const filteredData = data.platforms.filter(platform =>
-          connectedPlatformIds.includes(platform.platform.toLowerCase())
+          connectedPlatformIds.has(platform.platform.toLowerCase())
         )
 
         const transformedData = filteredData.map(platform => {
@@ -149,9 +152,8 @@ function Health() {
     })
 
     const unsubUpdate = healthWebSocket.on('health_update', (platforms) => {
-      const connectedPlatformIds = connectedPlatforms.map(p => p.id)
       const filteredPlatforms = platforms.filter(p =>
-        connectedPlatformIds.includes(p.platform.toLowerCase())
+        connectedPlatformIds.has(p.platform.toLowerCase())
       )
 
       const transformedData = filteredPlatforms.map(platform => {
@@ -176,6 +178,11 @@ function Health() {
     })
 
     const unsubAlert = healthWebSocket.on('health_alert', (alert) => {
+      const platformId = typeof alert?.platform === 'string' ? alert.platform.toLowerCase() : ''
+      if (!connectedPlatformIds.has(platformId)) {
+        return
+      }
+
       setActiveAlerts(prev => {
         const newAlerts = [{
           id: Date.now(),
@@ -195,7 +202,17 @@ function Health() {
       unsubUpdate()
       unsubAlert()
     }
-  }, [connectedPlatforms])
+  }, [connectedPlatforms, connectedPlatformIds])
+
+  useEffect(() => {
+    // Remove alerts that no longer correspond to a connected platform
+    setActiveAlerts(prev =>
+      prev.filter(alert => {
+        const platformId = typeof alert?.platform === 'string' ? alert.platform.toLowerCase() : ''
+        return platformId && connectedPlatformIds.has(platformId)
+      })
+    )
+  }, [connectedPlatformIds])
 
   return (
     <div className="space-y-6">

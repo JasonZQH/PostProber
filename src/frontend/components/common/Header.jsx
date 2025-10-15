@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import healthWebSocket from '../../services/healthWebSocket'
 import platformService from '../../services/platformService'
@@ -21,6 +21,11 @@ function Header() {
 
     return unsubscribe
   }, [])
+
+  const connectedPlatformIds = useMemo(
+    () => new Set(connectedPlatforms.map(platform => platform.id.toLowerCase())),
+    [connectedPlatforms]
+  )
 
   useEffect(() => {
     // Only connect to WebSocket if there are connected platforms
@@ -46,15 +51,29 @@ function Header() {
     })
 
     // Subscribe to health alerts
+    const filterForConnectedPlatform = (alert) => {
+      const platformId = typeof alert?.platform === 'string' ? alert.platform.toLowerCase() : ''
+      return platformId && connectedPlatformIds.has(platformId)
+    }
+
     const unsubAlert = healthWebSocket.on('health_alert', (alert) => {
+      if (!filterForConnectedPlatform(alert)) {
+        return
+      }
+
       setAlerts(prev => [...prev, alert].slice(-10)) // Keep last 10 alerts
       setUnreadCount(prev => prev + 1)
     })
 
     // Subscribe to alert history
     const unsubHistory = healthWebSocket.on('history', (history) => {
-      setAlerts(history.slice(-10)) // Keep last 10 alerts
-      setUnreadCount(healthWebSocket.getUnreadAlertCount(30))
+      const filteredHistory = history.filter(filterForConnectedPlatform)
+      setAlerts(filteredHistory.slice(-10)) // Keep last 10 alerts
+
+      const cutoff = new Date()
+      cutoff.setMinutes(cutoff.getMinutes() - 30)
+      const unread = filteredHistory.filter(alert => new Date(alert.timestamp) >= cutoff).length
+      setUnreadCount(unread)
     })
 
     // Cleanup on unmount or when platforms change
@@ -64,7 +83,17 @@ function Header() {
       unsubAlert()
       unsubHistory()
     }
-  }, [connectedPlatforms])
+  }, [connectedPlatforms, connectedPlatformIds])
+
+  useEffect(() => {
+    // Whenever the connected platform list changes, trim alerts that no longer apply
+    setAlerts(prev =>
+      prev.filter(alert => {
+        const platformId = typeof alert?.platform === 'string' ? alert.platform.toLowerCase() : ''
+        return platformId && connectedPlatformIds.has(platformId)
+      })
+    )
+  }, [connectedPlatformIds])
 
   const handleNotificationClick = () => {
     setShowNotifications(!showNotifications)

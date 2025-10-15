@@ -5,17 +5,20 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse, JSONResponse
 from typing import Dict, Optional
 import logging
-from pathlib import Path
 import sys
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parent.parent.parent))
+# Ensure backend package is importable when running as a script
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.append(str(BACKEND_DIR))
 
 from auth.twitter_oauth import TwitterOAuth
 from auth.linkedin_oauth import LinkedInOAuth
 from auth.instagram_oauth import InstagramOAuth
 from auth.facebook_oauth import FacebookOAuth
 from database.models import db
+
 
 logger = logging.getLogger(__name__)
 

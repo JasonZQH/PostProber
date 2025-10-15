@@ -121,7 +121,7 @@ class AIService {
      */
     async checkHealth() {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/health`);
+            const response = await fetch(`${API_BASE_URL}/api/health/status`);
             const data = await response.json();
             return data;
         } catch (error) {

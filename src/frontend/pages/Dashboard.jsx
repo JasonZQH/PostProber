@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import platformService from '../services/platformService'
 
@@ -16,89 +16,68 @@ function Dashboard() {
 
     return unsubscribe
   }, [])
-  const stats = [
+  const formatRelativeTime = (isoString) => {
+    if (!isoString) return 'Not available'
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return 'Not available'
+
+    const diffMs = Date.now() - date.getTime()
+    const diffMinutes = Math.floor(diffMs / 60000)
+
+    if (diffMinutes < 1) return 'Just now'
+    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+    const diffDays = Math.floor(diffHours / 24)
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  }
+
+  const latestConnection = useMemo(() => {
+    const sorted = connectedPlatforms
+      .filter(platform => platform.connectedAt)
+      .sort((a, b) => new Date(b.connectedAt) - new Date(a.connectedAt))
+    return sorted[0]
+  }, [connectedPlatforms])
+
+  const stats = useMemo(() => [
     {
-      label: 'Total Posts',
-      value: '2,847',
-      change: '+12%',
-      changeType: 'positive',
+      label: 'Connected Platforms',
+      value: connectedPlatforms.length.toString(),
+      icon: '🔗',
+      color: 'var(--primary-blue)',
+      description: connectedPlatforms.length
+        ? connectedPlatforms.map(p => p.name).join(', ')
+        : 'Link a platform to unlock analytics and posting tools.'
+    },
+    {
+      label: 'Latest Connection',
+      value: latestConnection ? latestConnection.name : '—',
+      icon: '🆕',
+      color: 'var(--accent-green)',
+      description: latestConnection
+        ? `Linked ${formatRelativeTime(latestConnection.connectedAt)}`
+        : 'No platforms connected yet.'
+    },
+    {
+      label: 'AI Health Monitoring',
+      value: connectedPlatforms.length ? 'Active' : 'Idle',
+      icon: '🩺',
+      color: 'var(--warning-orange)',
+      description: connectedPlatforms.length
+        ? 'Monitoring connected APIs every few minutes.'
+        : 'Connect a platform to enable live health checks.'
+    },
+    {
+      label: 'Posting Activity',
+      value: '—',
       icon: '📝',
-      color: 'var(--primary-blue)'
-    },
-    {
-      label: 'Total Reach',
-      value: '1.2M',
-      change: '+18%',
-      changeType: 'positive',
-      icon: '👥',
-      color: 'var(--accent-green)'
-    },
-    {
-      label: 'Engagement Rate',
-      value: '8.4%',
-      change: '+2.1%',
-      changeType: 'positive',
-      icon: '❤️',
-      color: 'var(--warning-orange)'
-    },
-    {
-      label: 'Scheduled Posts',
-      value: '24',
-      change: '+5',
-      changeType: 'positive',
-      icon: '📅',
-      color: 'var(--primary-blue)'
+      color: 'var(--primary-blue)',
+      description: 'Publishing history will appear once posting integration is enabled.'
     }
-  ]
+  ], [connectedPlatforms, latestConnection])
 
-  const recentPosts = [
-    {
-      id: 1,
-      content: 'Just launched our new AI-powered social media tool! 🚀 #AI #SocialMedia',
-      platforms: ['Twitter', 'LinkedIn'],
-      status: 'published',
-      engagement: { likes: 156, comments: 23, shares: 12 },
-      publishedAt: '2 hours ago'
-    },
-    {
-      id: 2,
-      content: 'Behind the scenes of building PostProber ✨ The future of social media management',
-      platforms: ['Instagram', 'Twitter'],
-      status: 'scheduled',
-      scheduledFor: 'Today at 3:00 PM',
-      publishedAt: null
-    },
-    {
-      id: 3,
-      content: 'Top 5 social media trends that will dominate 2024 📈 Thread below 👇',
-      platforms: ['Twitter'],
-      status: 'published',
-      engagement: { likes: 89, comments: 15, shares: 8 },
-      publishedAt: '5 hours ago'
-    },
-    {
-      id: 4,
-      content: 'Customer success story: How @CompanyName increased engagement by 300% using our platform 📊✨',
-      platforms: ['LinkedIn', 'Facebook'],
-      status: 'published',
-      engagement: { likes: 234, comments: 45, shares: 18 },
-      publishedAt: '8 hours ago'
-    },
-    {
-      id: 5,
-      content: 'Monday motivation: Consistency is key to social media success! What\'s your posting strategy? 💪',
-      platforms: ['Instagram', 'Twitter'],
-      status: 'published',
-      engagement: { likes: 127, comments: 32, shares: 9 },
-      publishedAt: '1 day ago'
-    }
-  ]
-
-  const upcomingPosts = [
-    { time: '2:00 PM', content: 'Weekly analytics report', platform: 'LinkedIn' },
-    { time: '4:30 PM', content: 'Product update announcement', platform: 'Twitter' },
-    { time: '6:00 PM', content: 'Team showcase Friday', platform: 'Instagram' }
-  ]
+  const recentPosts = []
+  const upcomingPosts = []
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -223,19 +202,15 @@ function Dashboard() {
                     >
                       {stat.icon}
                     </div>
-                    <div
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        stat.changeType === 'positive' ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'
-                      }`}
-                    >
-                      {stat.change}
-                    </div>
                   </div>
                   <div className="text-2xl font-bold mb-1" style={{ color: 'var(--gray-900)' }}>
                     {stat.value}
                   </div>
-                  <div className="text-sm" style={{ color: 'var(--gray-600)' }}>
+                  <div className="text-sm font-medium mb-1" style={{ color: 'var(--gray-700)' }}>
                     {stat.label}
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--gray-600)' }}>
+                    {stat.description}
                   </div>
                 </div>
               </div>
@@ -253,51 +228,58 @@ function Dashboard() {
               </div>
             </div>
             <div className="card-content">
-              <div className="space-y-4">
-                {recentPosts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="p-4 border rounded-lg transition-colors hover:bg-white group cursor-pointer"
-                    style={{ borderColor: 'var(--gray-200)' }}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <p className="text-sm mb-2 group-hover:!text-black" style={{ color: 'var(--gray-800)' }}>
-                          {post.content}
-                        </p>
-                        <div className="flex items-center gap-2 mb-2">
-                          {post.platforms.map((platform) => (
-                            <span
-                              key={platform}
-                              className="px-2 py-1 rounded text-xs font-medium"
-                              style={{
-                                color: getPlatformColor(platform),
-                                background: `${getPlatformColor(platform)}15`
-                              }}
-                            >
-                              {platform}
-                            </span>
-                          ))}
+              {recentPosts.length === 0 ? (
+                <div className="p-6 text-center text-sm" style={{ color: 'var(--gray-600)' }}>
+                  No recent publishing data yet. Once posting integrations are connected,
+                  new activity will appear here automatically.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="p-4 border rounded-lg transition-colors hover:bg-white group cursor-pointer"
+                      style={{ borderColor: 'var(--gray-200)' }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <p className="text-sm mb-2 group-hover:!text-black" style={{ color: 'var(--gray-800)' }}>
+                            {post.content}
+                          </p>
+                          <div className="flex items-center gap-2 mb-2">
+                            {post.platforms.map((platform) => (
+                              <span
+                                key={platform}
+                                className="px-2 py-1 rounded text-xs font-medium"
+                                style={{
+                                  color: getPlatformColor(platform),
+                                  background: `${getPlatformColor(platform)}15`
+                                }}
+                              >
+                                {platform}
+                              </span>
+                            ))}
+                          </div>
                         </div>
+                        {getStatusBadge(post.status)}
                       </div>
-                      {getStatusBadge(post.status)}
+                      {post.engagement && (
+                        <div className="flex items-center gap-4 text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
+                          <span>❤️ {post.engagement.likes}</span>
+                          <span>💬 {post.engagement.comments}</span>
+                          <span>🔄 {post.engagement.shares}</span>
+                          <span className="ml-auto">{post.publishedAt}</span>
+                        </div>
+                      )}
+                      {post.scheduledFor && (
+                        <div className="text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
+                          Scheduled for {post.scheduledFor}
+                        </div>
+                      )}
                     </div>
-                    {post.engagement && (
-                      <div className="flex items-center gap-4 text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
-                        <span>❤️ {post.engagement.likes}</span>
-                        <span>💬 {post.engagement.comments}</span>
-                        <span>🔄 {post.engagement.shares}</span>
-                        <span className="ml-auto">{post.publishedAt}</span>
-                      </div>
-                    )}
-                    {post.scheduledFor && (
-                      <div className="text-sm group-hover:!text-black" style={{ color: 'var(--gray-600)' }}>
-                        Scheduled for {post.scheduledFor}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -362,24 +344,31 @@ function Dashboard() {
               </h3>
             </div>
             <div className="card-content">
-              <div className="space-y-3">
-                {upcomingPosts.map((post, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ background: getPlatformColor(post.platform) }}
-                    ></div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium" style={{ color: 'var(--gray-800)' }}>
-                        {post.time}
-                      </div>
-                      <div className="text-xs" style={{ color: 'var(--gray-600)' }}>
-                        {post.content} • {post.platform}
+              {upcomingPosts.length === 0 ? (
+                <div className="text-sm text-center" style={{ color: 'var(--gray-600)' }}>
+                  Scheduling data is not yet available. Use the Schedule page to plan posts once
+                  your automation workflow is connected.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingPosts.map((post, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ background: getPlatformColor(post.platform) }}
+                      ></div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium" style={{ color: 'var(--gray-800)' }}>
+                          {post.time}
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--gray-600)' }}>
+                          {post.content} • {post.platform}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
